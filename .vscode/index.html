@@ -1,0 +1,2380 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Refugio Cinematográfico - Edición Personalizada</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700&family=Comfortaa:wght@300;600&family=IM+Fell+English:ital@0;1&family=UnifrakturMaguntia&family=MedievalSharp&display=swap');
+        
+        body, html {
+            margin: 0; padding: 0; width: 100%; height: 100%;
+            background: radial-gradient(circle at center, #070311 0%, #010103 100%);
+            overflow: hidden; font-family: 'Comfortaa', cursive; color: #f1f5f9;
+        }
+        .gothic-title {
+            font-family: 'Cinzel Decorative', serif;
+            text-shadow: 0 0 25px rgba(236, 72, 153, 0.6);
+        }
+        canvas { position: absolute; top: 0; left: 0; z-index: 1; pointer-events: none; }
+        .ui-container { z-index: 10; position: relative; }
+        .glass-panel {
+            background: rgba(6, 3, 13, 0.88);
+            backdrop-filter: blur(25px);
+            border: 1px solid rgba(236, 72, 153, 0.2);
+            box-shadow: 0 0 45px rgba(236, 72, 153, 0.15);
+        }
+        .blur-text {
+            filter: blur(5px); opacity: 0; transform: scale(0.98); transition: all 1.2s ease-in-out;
+        }
+        .clear-text {
+            filter: blur(0px); opacity: 1; transform: scale(1);
+        }
+
+        #galaxy-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100vw; height: 100vh;
+            z-index: 9999;
+            background: #000;
+            cursor: none;
+        }
+        #galaxy-overlay canvas {
+            position: absolute; top: 0; left: 0;
+            width: 100%; height: 100%;
+            pointer-events: all;
+            z-index: 1;
+        }
+        #cursor-hearts-canvas {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: 10000;
+            display: none;
+        }
+        #pergamino-btn-float {
+            display: none;
+            position: fixed;
+            bottom: 38px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 10002;
+            animation: floatBtn 2s ease-in-out infinite alternate;
+        }
+        @keyframes floatBtn {
+            from { transform: translateX(-50%) translateY(0px); }
+            to   { transform: translateX(-50%) translateY(-8px); }
+        }
+
+        #pergamino-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100vw; height: 100vh;
+            z-index: 20000;
+            background: rgba(5,2,10,0.92);
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+        #pergamino-overlay.active { display: flex; }
+
+        #perg-canvas {
+            position: absolute; top:0; left:0;
+            width:100%; height:100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        #envelope-wrap {
+            position: relative;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        .envelope {
+            width: 320px; height: 220px;
+            position: relative;
+            cursor: pointer;
+            filter: drop-shadow(0 0 32px rgba(200,140,60,0.5));
+            transition: transform 0.3s;
+        }
+        .envelope:hover { transform: scale(1.04); }
+        .envelope svg { width: 100%; height: 100%; }
+
+        .env-flap {
+            transform-origin: top center;
+            transition: transform 0.9s cubic-bezier(.4,0,.2,1);
+        }
+        .envelope.open .env-flap {
+            transform: rotateX(180deg);
+        }
+
+        .letter-card {
+            position: absolute;
+            left: 50%; top: 50%;
+            transform: translate(-50%, 10px);
+            width: 280px;
+            background: linear-gradient(160deg, #fdf6e3 0%, #f5e6c8 60%, #ede0b0 100%);
+            border-radius: 4px 4px 2px 2px;
+            box-shadow: 0 8px 32px rgba(100,60,0,0.25);
+            padding: 22px 20px 18px;
+            font-family: 'IM Fell English', serif;
+            color: #3a200a;
+            font-size: 13px;
+            line-height: 1.7;
+            opacity: 0;
+            transition: opacity 0.7s ease, transform 1.1s cubic-bezier(.4,0,.2,1);
+            pointer-events: none;
+            z-index: -1;
+            max-height: 340px;
+            overflow-y: auto;
+        }
+        .letter-card.risen {
+            opacity: 1;
+            transform: translate(-50%, -230px);
+            pointer-events: all;
+            z-index: 20;
+        }
+        .letter-card::-webkit-scrollbar { width: 4px; }
+        .letter-card::-webkit-scrollbar-thumb { background: rgba(120,80,20,0.3); border-radius:2px; }
+
+        .letter-wax {
+            width: 38px; height: 38px;
+            background: radial-gradient(circle at 38% 35%, #e84545 0%, #9b1a1a 70%);
+            border-radius: 50%;
+            margin: 0 auto 10px;
+            box-shadow: 0 2px 8px rgba(180,20,20,0.4);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 16px;
+        }
+        .letter-lines {
+            border-bottom: 1px solid rgba(120,80,20,0.2);
+            margin-bottom: 6px;
+            padding-bottom: 4px;
+        }
+
+        #cartas-panel {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100vw; height: 100vh;
+            z-index: 25000;
+            background: rgba(5,2,10,0.97);
+            flex-direction: column;
+            align-items: center;
+            overflow-y: auto;
+            padding: 30px 16px 60px;
+        }
+        #cartas-panel.active { display: flex; }
+        #cartas-panel::-webkit-scrollbar { width: 5px; }
+        #cartas-panel::-webkit-scrollbar-thumb { background: rgba(200,140,60,0.3); border-radius:3px; }
+
+        .perg-header {
+            font-family: 'UnifrakturMaguntia', cursive;
+            font-size: 2rem;
+            color: #d4a050;
+            text-shadow: 0 0 18px rgba(212,160,80,0.5);
+            margin-bottom: 6px;
+            text-align: center;
+        }
+        .perg-sub {
+            font-family: 'IM Fell English', serif;
+            font-style: italic;
+            color: rgba(212,160,80,0.55);
+            font-size: 12px;
+            margin-bottom: 28px;
+            text-align: center;
+            letter-spacing: 2px;
+        }
+
+        .carta-item {
+            width: 100%;
+            max-width: 680px;
+            background: linear-gradient(160deg, #fdf6e3 0%, #f5e6c8 60%, #ede0b0 100%);
+            border-radius: 4px;
+            box-shadow: 0 4px 24px rgba(100,60,0,0.22);
+            padding: 22px 24px 18px;
+            font-family: 'IM Fell English', serif;
+            color: #3a200a;
+            font-size: 14px;
+            line-height: 1.8;
+            margin-bottom: 10px;
+            position: relative;
+            border-left: 3px solid rgba(160,80,20,0.3);
+        }
+        .carta-item-title {
+            font-family: 'UnifrakturMaguntia', cursive;
+            font-size: 1.2rem;
+            color: #7a3a0a;
+            margin-bottom: 8px;
+        }
+
+        /* separador entre cartas */
+        .carta-separador {
+            width: 100%;
+            max-width: 680px;
+            margin: 0 auto 18px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+        .carta-separador-img {
+            width: 100%;
+            max-height: 220px;
+            object-fit: cover;
+            border-radius: 4px;
+            border: 1px solid rgba(160,80,20,0.2);
+            cursor: pointer;
+            display: block;
+            filter: sepia(20%) saturate(1.0) contrast(0.92);
+            transition: filter 0.2s;
+        }
+        .carta-separador-img:hover { filter: sepia(0%) saturate(1.2) contrast(1); }
+        .carta-separador-line {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .carta-separador-line hr {
+            flex: 1;
+            border: none;
+            border-top: 1px solid rgba(160,80,20,0.18);
+        }
+        .carta-separador-line span {
+            font-family: 'IM Fell English', serif;
+            font-style: italic;
+            font-size: 11px;
+            color: rgba(120,60,20,0.35);
+            letter-spacing: 2px;
+            white-space: nowrap;
+        }
+        .sep-add-img-btn {
+            background: none;
+            border: 1px dashed rgba(160,80,20,0.25);
+            color: rgba(120,60,20,0.4);
+            font-family: 'IM Fell English', serif;
+            font-size: 11px;
+            letter-spacing: 1px;
+            padding: 4px 14px;
+            border-radius: 3px;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-top: 2px;
+        }
+        .sep-add-img-btn:hover { color: rgba(120,60,20,0.75); border-color: rgba(160,80,20,0.5); }
+
+        /* zigzag: imagen cada 2 párrafos */
+        .carta-parrafo-wrap {
+            display: flex;
+            align-items: flex-start;
+            gap: 14px;
+            margin-bottom: 14px;
+        }
+        .carta-parrafo-wrap.img-derecha { flex-direction: row; }
+        .carta-parrafo-wrap.img-izquierda { flex-direction: row-reverse; }
+        .carta-parrafo-texto {
+            flex: 1;
+            min-width: 0;
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 15px;
+            line-height: 1.9;
+            font-style: normal;
+            font-weight: 400;
+            color: #3a1a05;
+            white-space: pre-wrap;
+        }
+        .carta-img-thumb {
+            width: 140px;
+            height: 140px;
+            object-fit: cover;
+            border-radius: 4px;
+            border: 2px solid rgba(160,80,20,0.25);
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            display: block;
+            flex-shrink: 0;
+            filter: sepia(15%) saturate(1.1) contrast(0.95);
+        }
+        .carta-img-thumb:hover {
+            transform: scale(1.06);
+            box-shadow: 0 4px 16px rgba(120,60,0,0.35);
+            filter: sepia(0%) saturate(1.2) contrast(1);
+        }
+
+        /* botones de acción de carta */
+        .carta-actions {
+            position: absolute; top: 10px; right: 12px;
+            display: flex; gap: 8px; align-items: center;
+        }
+        .carta-delete {
+            background: none; border: none;
+            color: rgba(120,50,20,0.35); cursor: pointer;
+            font-size: 15px; transition: color 0.2s; line-height: 1;
+        }
+        .carta-delete:hover { color: #c0392b; }
+        .carta-edit-btn {
+            background: none; border: none;
+            color: rgba(100,60,20,0.35); cursor: pointer;
+            font-family: 'IM Fell English', serif;
+            font-size: 11px; letter-spacing: 1px;
+            transition: color 0.2s; line-height: 1;
+        }
+        .carta-edit-btn:hover { color: rgba(100,60,20,0.8); }
+
+        /* formulario edición inline */
+        .carta-edit-form {
+            display: none;
+            margin-top: 14px;
+            border-top: 1px solid rgba(160,80,20,0.15);
+            padding-top: 12px;
+        }
+        .carta-edit-form.visible { display: block; }
+        .carta-edit-form input[type="text"],
+        .carta-edit-form textarea {
+            width: 100%;
+            background: rgba(255,240,200,0.5);
+            border: 1px solid rgba(160,80,20,0.25);
+            border-radius: 3px;
+            padding: 7px 9px;
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 14px;
+            color: #3a200a;
+            outline: none;
+            resize: vertical;
+            margin-bottom: 8px;
+            box-sizing: border-box;
+        }
+        .carta-edit-form textarea { min-height: 80px; }
+        .carta-edit-form label {
+            font-size: 10px;
+            color: rgba(80,40,10,0.55);
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            display: block;
+            margin-bottom: 3px;
+        }
+
+        #img-lightbox {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100vw; height: 100vh;
+            z-index: 99999;
+            background: rgba(0,0,0,0.92);
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+        #img-lightbox.active { display: flex; }
+        #img-lightbox img {
+            max-width: 90vw;
+            max-height: 88vh;
+            border-radius: 6px;
+            box-shadow: 0 0 60px rgba(200,140,60,0.3);
+            border: 2px solid rgba(200,140,60,0.2);
+        }
+        #lightbox-close {
+            position: absolute;
+            top: 18px; right: 24px;
+            color: rgba(200,140,60,0.7);
+            font-size: 28px;
+            cursor: pointer;
+            line-height: 1;
+        }
+
+        /* formulario nueva carta */
+        .nueva-carta-form {
+            width: 100%;
+            max-width: 680px;
+            background: linear-gradient(160deg, #fdf6e3 0%, #f5e6c8 60%, #ede0b0 100%);
+            border-radius: 4px;
+            box-shadow: 0 4px 24px rgba(100,60,0,0.22);
+            padding: 22px 24px 18px;
+            font-family: 'IM Fell English', serif;
+            color: #3a200a;
+            margin-bottom: 28px;
+            border-top: 3px solid rgba(180,100,20,0.4);
+        }
+        #nueva-carta-wrap {
+            width: 100%;
+            max-width: 680px;
+            display: none;
+        }
+        #nueva-carta-wrap.visible { display: block; }
+        #btn-nueva-carta-toggle {
+            background: none;
+            border: none;
+            color: rgba(120,70,20,0.35);
+            font-family: 'IM Fell English', serif;
+            font-size: 11px;
+            letter-spacing: 2px;
+            cursor: pointer;
+            padding: 6px 14px;
+            margin-bottom: 20px;
+            border-bottom: 1px solid rgba(120,70,20,0.12);
+            transition: color 0.3s;
+            display: block;
+            width: 100%;
+            max-width: 680px;
+            text-align: right;
+        }
+        #btn-nueva-carta-toggle:hover { color: rgba(120,70,20,0.7); }
+
+        .nueva-carta-form input[type="text"],
+        .nueva-carta-form textarea {
+            width: 100%;
+            background: rgba(255,240,200,0.5);
+            border: 1px solid rgba(160,80,20,0.25);
+            border-radius: 3px;
+            padding: 8px 10px;
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 14px;
+            color: #3a200a;
+            outline: none;
+            resize: vertical;
+            margin-bottom: 10px;
+            box-sizing: border-box;
+            font-style: italic;
+            letter-spacing: 0.3px;
+        }
+        .nueva-carta-form textarea { min-height: 90px; }
+        .nueva-carta-form label {
+            font-size: 11px;
+            color: rgba(80,40,10,0.6);
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            display: block;
+            margin-bottom: 4px;
+        }
+        .btn-perg {
+            background: linear-gradient(90deg, #8b4513, #c0762a, #8b4513);
+            color: #fdf6e3;
+            border: none;
+            border-radius: 3px;
+            padding: 9px 22px;
+            font-family: 'IM Fell English', serif;
+            font-size: 13px;
+            cursor: pointer;
+            letter-spacing: 1px;
+            box-shadow: 0 2px 10px rgba(120,60,0,0.3);
+            transition: opacity 0.2s;
+        }
+        .btn-perg:hover { opacity: 0.88; }
+        .btn-cerrar-panel {
+            position: fixed;
+            top: 18px; right: 22px;
+            z-index: 26000;
+            background: rgba(200,140,60,0.12);
+            border: 1px solid rgba(200,140,60,0.3);
+            color: #d4a050;
+            border-radius: 50%;
+            width: 38px; height: 38px;
+            font-size: 18px;
+            cursor: pointer;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s;
+        }
+        .btn-cerrar-panel.active { display: flex; }
+        .btn-cerrar-panel:hover { background: rgba(200,140,60,0.25); }
+
+        .img-preview-wrap {
+            display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px;
+        }
+        .img-preview-thumb {
+            width: 72px; height: 72px;
+            object-fit: cover;
+            border-radius: 3px;
+            border: 1px solid rgba(160,80,20,0.25);
+        }
+
+        /* ── PLAYLIST PANEL ── */
+        #playlist-panel {
+            display: none;
+            position: fixed;
+            bottom: 80px; left: 50%;
+            transform: translateX(-50%);
+            z-index: 10003;
+            background: rgba(6,3,13,0.95);
+            border: 1px solid rgba(200,140,60,0.25);
+            border-radius: 6px;
+            padding: 14px 18px;
+            min-width: 280px;
+            max-width: 340px;
+            box-shadow: 0 0 24px rgba(180,100,20,0.2);
+        }
+        #playlist-panel.visible { display: block; }
+        .playlist-title {
+            font-family: 'IM Fell English', serif;
+            font-size: 11px;
+            letter-spacing: 2px;
+            color: rgba(212,160,80,0.6);
+            text-align: center;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+        }
+        .playlist-track {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 8px;
+            border-radius: 3px;
+            cursor: pointer;
+            transition: background 0.15s;
+            margin-bottom: 3px;
+        }
+        .playlist-track:hover { background: rgba(200,140,60,0.08); }
+        .playlist-track.playing { background: rgba(200,140,60,0.14); }
+        .playlist-track-name {
+            font-family: 'IM Fell English', serif;
+            font-size: 12px;
+            color: rgba(212,160,80,0.75);
+            flex: 1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .playlist-track.playing .playlist-track-name { color: #d4a050; }
+        .playlist-del {
+            background: none; border: none;
+            color: rgba(160,80,20,0.3); cursor: pointer;
+            font-size: 12px; line-height: 1;
+            transition: color 0.15s; padding: 0 2px;
+        }
+        .playlist-del:hover { color: rgba(200,60,20,0.7); }
+        .playlist-add-wrap {
+            margin-top: 10px;
+            border-top: 1px solid rgba(160,80,20,0.12);
+            padding-top: 10px;
+        }
+        .playlist-add-label {
+            font-family: 'IM Fell English', serif;
+            font-size: 10px;
+            color: rgba(160,100,20,0.45);
+            letter-spacing: 1px;
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        /* ── PANTALLA FINAL ── */
+        #pantalla-final {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100vw; height: 100vh;
+            z-index: 30000;
+            background: radial-gradient(circle at center, #0d0108 0%, #010002 100%);
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        #gothic-rose-canvas {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: 2;
+        }
+
+        .pensando-content {
+            position: relative;
+            z-index: 10;
+            text-align: center;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: absolute;
+            top: 6vh;
+            left: 0; right: 0;
+        }
+
+        #pensando-titulo {
+            font-family: 'UnifrakturMaguntia', cursive;
+            font-size: clamp(2rem, 7vw, 5rem);
+            color: #f8f0e0;
+            text-shadow: 0 0 30px rgba(200,50,30,0.9), 0 0 60px rgba(180,30,10,0.6), 0 0 100px rgba(150,20,5,0.3);
+            line-height: 1.1;
+            opacity: 0;
+            transform: scale(0.85);
+            transition: opacity 2s ease, transform 2s ease;
+            letter-spacing: 0.02em;
+        }
+
+        #pensando-linea {
+            margin-top: 10px;
+            font-family: 'IM Fell English', serif;
+            font-style: italic;
+            color: rgba(220, 160, 100, 0.75);
+            font-size: clamp(0.7rem, 1.8vw, 0.95rem);
+            letter-spacing: 4px;
+            opacity: 0;
+            transition: opacity 2s ease 1.2s;
+        }
+
+        #pensando-btn-wrap {
+            opacity: 0;
+            transition: opacity 1.5s ease 2.5s;
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;600&display=swap" rel="stylesheet">
+</head>
+<body class="flex items-center justify-center relative">
+
+    <canvas id="gothicCanvas"></canvas>
+    <canvas id="cursor-hearts-canvas"></canvas>
+
+    <!-- AUDIO: primera canción (se detiene al abrir el baúl) -->
+    <audio id="bg-audio" loop preload="auto">
+        <source src="cancion.mp3.mp3" type="audio/mpeg">
+    </audio>
+
+    <div id="portal-gate" class="ui-container w-full max-w-md glass-panel p-10 rounded-3xl text-center mx-4 transition-all duration-1000">
+        <h1 class="gothic-title text-2xl md:text-3xl text-rose-400 font-bold mb-2">PARA TI</h1>
+        <p class="text-xs text-slate-500 tracking-widest uppercase mb-8">Pista:el mes en que todo inicio(MIN)</p>
+        <input type="password" id="portal-key" placeholder="Introduce la palabra clave..." 
+               class="w-full px-5 py-3.5 bg-slate-950/90 border border-pink-500/30 rounded-xl text-center text-white focus:outline-none focus:border-pink-500 transition-all tracking-widest text-sm mb-5 placeholder:text-slate-800">
+        <button onclick="igniteInstantCinema()" 
+                class="w-full bg-gradient-to-r from-pink-600 via-purple-700 to-indigo-800 text-white font-bold py-4 px-6 rounded-xl hover:opacity-95 active:scale-[0.98] transition-all tracking-widest text-xs uppercase shadow-lg shadow-pink-600/30">
+            🌠 INICIAR 🌠
+        </button>
+        <p id="portal-error" class="text-rose-500 text-xs mt-3 hidden font-semibold">Esa clave no altera los engranajes de este mundo.</p>
+    </div>
+
+    <div id="cinema-stage" class="ui-container w-full max-w-3xl px-6 hidden text-center flex flex-col items-center justify-center min-h-[85vh]">
+        <div class="min-h-[180px] flex items-center justify-center flex-col px-4">
+            <h3 id="scene-tag" class="text-pink-400/60 text-xs tracking-widest uppercase mb-4 font-bold"></h3>
+            <p id="scene-narration" class="text-lg md:text-xl text-slate-100 font-light leading-relaxed max-w-2xl select-none blur-text"></p>
+        </div>
+        <div id="hud-controls" class="w-full flex flex-col items-center gap-4 mt-6 opacity-0 transition-opacity duration-1000">
+            <button id="forward-btn" onclick="advanceScene()" 
+                    class="px-8 py-3 rounded-full bg-white/5 hover:bg-white/12 border border-pink-500/30 text-pink-300 text-xs font-bold tracking-widest uppercase transition-all hover:scale-105 active:scale-95">
+                Continuar el viaje narrativo →
+            </button>
+            <div id="destiny-choices" class="hidden flex flex-wrap justify-center gap-4 w-full">
+                <button onclick="revealEnding('recuerdos')" class="px-6 py-3.5 rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 text-white text-xs font-bold tracking-widest uppercase shadow-md">🧳 Guardar Baúl Inmortal</button>
+            </div>
+        </div>
+        <div id="gothic-notebook" class="w-full glass-panel p-6 rounded-2xl mt-6 text-left hidden">
+            <input type="text" id="gothic-title-input" placeholder="Título de este folio secreto..." class="w-full bg-transparent border-none text-pink-400 font-bold text-lg focus:outline-none placeholder:text-slate-800 mb-2">
+            <textarea id="gothic-body-input" placeholder="Escribe libremente aquí sin candados ni límites de espacio..." class="w-full bg-transparent border-none text-slate-300 text-sm focus:outline-none resize-none h-32 placeholder:text-slate-700"></textarea>
+            <div class="flex justify-between items-center mt-2 border-t border-slate-900/60 pt-2 text-[10px] text-slate-600">
+                <button onclick="saveFolio()" class="text-pink-400 font-bold hover:underline">Grabar folio de forma privada ✓</button>
+                <span id="gothic-save-msg"></span>
+            </div>
+        </div>
+    </div>
+
+    <div id="galaxy-overlay">
+        <canvas id="gc"></canvas>
+    </div>
+
+    <div id="pergamino-btn-float">
+        <button onclick="abrirPergamino()"
+            style="font-family:'IM Fell English',serif; background:linear-gradient(90deg,#7a3a0a,#c0762a,#7a3a0a); color:#fdf6e3; border:none; padding:10px 26px; border-radius:4px; font-size:12px; letter-spacing:2px; cursor:pointer; box-shadow:0 0 22px rgba(180,100,20,0.5); text-transform:uppercase;">
+            ✒️ Abrir Pergamino 
+        </button>
+    </div>
+
+    <div id="pergamino-overlay">
+        <canvas id="perg-canvas"></canvas>
+        <div id="envelope-wrap">
+            <p style="font-family:'IM Fell English',serif; color:rgba(212,160,80,0.7); font-style:italic; font-size:13px; margin-bottom:18px; letter-spacing:2px; text-align:center;">~ Toca el sobre para abrirlo ~</p>
+            <div class="envelope" id="envelope" onclick="abrirSobre()">
+                <svg viewBox="0 0 320 220" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <linearGradient id="envGrad" x1="0" y1="0" x2="1" y2="1">
+                            <stop offset="0%" stop-color="#c8934a"/>
+                            <stop offset="100%" stop-color="#8b5e2a"/>
+                        </linearGradient>
+                        <linearGradient id="envLight" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stop-color="#e8b870"/>
+                            <stop offset="100%" stop-color="#a0682a"/>
+                        </linearGradient>
+                    </defs>
+                    <rect x="2" y="2" width="316" height="216" rx="6" fill="url(#envGrad)" stroke="#6b3d10" stroke-width="1.5"/>
+                    <polygon points="2,2 160,118 2,218" fill="#a0682a" opacity="0.7"/>
+                    <polygon points="318,2 160,118 318,218" fill="#a0682a" opacity="0.7"/>
+                    <polygon points="2,218 160,118 318,218" fill="#b87830" opacity="0.85"/>
+                    <polygon class="env-flap" id="svgFlap" points="2,2 318,2 160,118" fill="url(#envLight)" stroke="#6b3d10" stroke-width="1"/>
+                    <circle cx="160" cy="110" r="18" fill="#c0392b" stroke="#7a1010" stroke-width="1.5"/>
+                    <text x="160" y="116" text-anchor="middle" fill="#fdf6e3" font-size="14" font-family="serif">♥</text>
+                    <line x1="30" y1="160" x2="120" y2="160" stroke="rgba(255,220,150,0.25)" stroke-width="1"/>
+                    <line x1="200" y1="160" x2="290" y2="160" stroke="rgba(255,220,150,0.25)" stroke-width="1"/>
+                </svg>
+            </div>
+            <div class="letter-card" id="letter-card">
+                <div class="letter-wax">♥</div>
+                <div style="font-family:'UnifrakturMaguntia',cursive; font-size:1.1rem; color:#7a3a0a; text-align:center; margin-bottom:10px;">Pergamino</div>
+                <div class="letter-lines" style="font-style:italic; font-size:12px; color:rgba(80,40,10,0.6); text-align:center;">~ las memorias aguardan dentro ~</div>
+                <p style="margin-top:10px; font-size:13px;">Cada carta guardada aquí es un fragmento eterno de lo que fue, es y será.</p>
+                <div style="text-align:center; margin-top:16px;">
+                    <button onclick="irACartas()" class="btn-perg">Abrir el baúl de cartas →</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="cartas-panel">
+        <div class="perg-header">✦ Baúl de Memorias ✦</div>
+        <p class="perg-sub">cada carta, un universo sellado</p>
+
+        <!-- Playlist flotante dentro del baúl -->
+        <div id="playlist-panel">
+            <div class="playlist-title">✦ Canciones ✦</div>
+            <div id="playlist-tracks"></div>
+            <div class="playlist-add-wrap">
+                <label class="playlist-add-label">Añadir canción (mp3, ogg, wav)</label>
+                <input type="file" id="playlist-file-input" accept="audio/*" style="font-size:11px; color:#7a3a0a; width:100%;" onchange="addTrackFromFile(this)">
+            </div>
+        </div>
+
+        <div id="lista-cartas" style="width:100%; max-width:680px;"></div>
+
+        <button id="btn-nueva-carta-toggle" onclick="toggleNuevaCarta()">✒ añadir carta</button>
+
+        <div id="nueva-carta-wrap">
+            <div class="nueva-carta-form">
+                <div style="font-family:'UnifrakturMaguntia',cursive; font-size:1.1rem; color:#7a3a0a; margin-bottom:14px;">✒ Nueva Carta</div>
+                <label>Título de la carta</label>
+                <input type="text" id="nc-titulo" placeholder="Un título para este momento...">
+                <label>El mensaje</label>
+                <textarea id="nc-cuerpo" placeholder="Escribe libremente, sin límites..."></textarea>
+                <label>Añadir imágenes (aparecen en zigzag cada 2 párrafos)</label>
+                <input type="file" id="nc-imgs" accept="image/*" multiple style="margin-bottom:10px; font-size:12px; color:#7a3a0a;">
+                <div id="nc-preview" class="img-preview-wrap"></div>
+                <div style="margin-top:14px; display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+                    <button class="btn-perg" onclick="guardarCarta()">Sellar carta ✓</button>
+                    <span id="nc-msg" style="font-size:12px; color:#7a3a0a; font-style:italic;"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+    <button class="btn-cerrar-panel" id="btn-cerrar" onclick="cerrarCartas()">✕</button>
+
+    <!-- Botón playlist flotante (solo visible en baúl) -->
+    <button id="btn-playlist-float" onclick="togglePlaylist()" style="
+        display: none;
+        position: fixed;
+        bottom: 28px; right: 22px;
+        z-index: 26002;
+        background: rgba(140,80,20,0.15);
+        border: 1px solid rgba(200,140,60,0.28);
+        color: rgba(212,160,80,0.55);
+        font-family: 'IM Fell English', serif;
+        font-size: 11px;
+        letter-spacing: 2px;
+        padding: 7px 16px;
+        border-radius: 3px;
+        cursor: pointer;
+        transition: all 0.3s;
+    " onmouseover="this.style.color='rgba(212,160,80,0.85)'; this.style.borderColor='rgba(200,140,60,0.5)'"
+       onmouseout="this.style.color='rgba(212,160,80,0.55)'; this.style.borderColor='rgba(200,140,60,0.28)'">
+        ♪ canciones
+    </button>
+
+    <button id="btn-fin-cartas" onclick="irAPantallaFinal()" style="
+        display: none;
+        position: fixed;
+        bottom: 28px; left: 50%;
+        transform: translateX(-50%);
+        z-index: 26001;
+        background: none;
+        border: 1px solid rgba(212,160,80,0.18);
+        color: rgba(212,160,80,0.35);
+        font-family: 'IM Fell English', serif;
+        font-size: 11px;
+        letter-spacing: 2px;
+        padding: 7px 20px;
+        border-radius: 3px;
+        cursor: pointer;
+        transition: all 0.3s;
+    " onmouseover="this.style.color='rgba(212,160,80,0.75)'; this.style.borderColor='rgba(212,160,80,0.4)'"
+       onmouseout="this.style.color='rgba(212,160,80,0.35)'; this.style.borderColor='rgba(212,160,80,0.18)'">
+        ~ cerrar baúl ~
+    </button>
+
+    <!-- PANTALLA FINAL -->
+    <div id="pantalla-final">
+        <canvas id="gothic-rose-canvas"></canvas>
+        <div class="pensando-content">
+            <div id="pensando-titulo">Pensando<br><span style="color:#ff2a2a; text-shadow: 0 0 40px rgba(255,40,10,1), 0 0 80px rgba(200,20,5,0.7);">en ti</span></div>
+            <div id="pensando-linea">~ siempre ~</div>
+            <div id="pensando-btn-wrap" style="position:fixed; bottom:22px; left:50%; transform:translateX(-50%); z-index:30010;">
+                <button onclick="volverAlInicio()" style="
+                    font-family: 'IM Fell English', serif;
+                    background: none;
+                    border: none;
+                    border-bottom: 1px solid rgba(180,80,60,0.25);
+                    color: rgba(200,130,100,0.38);
+                    padding: 4px 0;
+                    font-size: 11px;
+                    letter-spacing: 2px;
+                    font-style: italic;
+                    cursor: pointer;
+                    transition: all 0.4s;
+                    white-space: nowrap;
+                " onmouseover="this.style.color='rgba(220,150,120,0.7)'; this.style.borderColor='rgba(200,100,70,0.5)'"
+                   onmouseout="this.style.color='rgba(200,130,100,0.38)'; this.style.borderColor='rgba(180,80,60,0.25)'">
+                    ↩ volver al inicio
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Input oculto para imagen separadora entre cartas -->
+    <input type="file" id="sep-img-input" accept="image/*" style="display:none;" onchange="guardarImagenSeparador(this)">
+
+    <div id="img-lightbox" onclick="cerrarLightbox()">
+        <span id="lightbox-close">✕</span>
+        <img id="lightbox-img" src="" alt="">
+    </div>
+
+    <script>
+        const THE_KEY = "agosto"; 
+        const VOLUME_LEVEL = 0.4;
+
+        const cinematicScript = [
+            {
+                tag: "Acto I: El comiezo 16/08/2025",
+                text: `La mañana estaba despejada y yo apenas abría mis ojos. El silencio era incómodo, como si de un primero de enero se tratara; el frío se propagaba como el fuego en verano, tan hermoso pero abrumador al mismo tiempo. 
+                
+                Mi corazón latía a mil por hora, como si una planta eléctrica se encendiera en mi interior. El agua cayó por mi espalda como miles de cuchillas afiladas que no daban tregua mientras mi mente estaba completamente sesgada ante la incertidumbre. Me miré al espejo y era yo, o una parte de algo que no entendía aún. Me peiné mi cabello como se peina a la seda, me delineé los ojos llenos de impaciencia mientras el reloj me recordaba que era hora de salir.`
+            },
+            {
+                tag: "✨",
+                text: `El sol cubrió mis ojos mientras el aliento del viento secaba mi pelo y, sin darme cuenta, había miles de personas a mi alrededor: ansiosas, distantes, pero atentas a lo que acontecería luego. Me quedé en una esquina, como siempre lo hacía, mientras mis ojos eran unos escáneres de reconocimiento que lograron descifrar algunos rostros viejos y otros totalmente ajenos.
+
+Una voz nueva se alzó y todos seguimos las instrucciones impartidas. Caminé hasta llegar a un salón, me senté al lado de la ventana para poder juguetear con el sol y esperé a que todo tomara calma mientras las miradas eran errantes, desconfiadas entre sí.
+`
+            },
+            {
+                tag: "💫",
+                text: 'De repente, la puerta se abrió; el viento sopló con ligereza mientras algunas sombras entraron a aquel salón para ocupar el lugar que ya era suyo. ' +
+                      '           El tiempo transcurrió sin permiso. El azar, la suerte o simplemente el destino me hizo tenerte enfrente mío; después de miradas tímidas y fugaces, te llevaron a mí.'
+            },
+            {
+                tag: "🌠",
+                text: 'Te observé; tu voz se grabó en mi memoria mientras te escuchaba atentamente como si de un embrujo se tratara, embrujo que ya había hecho su efecto pero que negué con firmeza, creyendo que era más fuerte que cualquier fuerza de la naturaleza.'
+            },
+            {
+                tag: "🌌",
+                text: 'La luz me volvió a encontrar y aquel embrujo cobró presencia, ocupó mi espacio mientras miles de palabras salían sin orden ni gramática; algunas eran una prosa libre en mi garganta y otras cadenas que amarraban mi alma, el reloj volvió a hacer su magia y el día terminó. Entre pasos torpes caminaba en la calle mientras me acompañaste hasta llegar a mi casa, singularmente te despedías de mí en un adiós que no era un hasta nunca, sino un hasta pronto.'
+            },
+            {
+                tag: "🌟🌟🌟",
+                text: 'Ese hasta pronto irremediable que me sucumbió hasta lo más profundo de mis raíces y se enterró en mi corazón.'
+            },
+            {
+                tag: "Acto IV: Tu Propio Universo",
+                text: "CONTINUAR....."
+            }
+        ];
+
+        const bgAudio = document.getElementById("bg-audio");
+        const canvas = document.getElementById("gothicCanvas");
+        const ctx = canvas.getContext("2d");
+        let petals = [];
+        let isCinemaActive = false;
+        let currentScene = 0;
+        // flag: si la primera canción ya fue detenida (al abrir el baúl)
+        let firstSongStopped = false;
+
+        // ── PLAYLIST ──
+        // Pon aquí los archivos de música que quieras que sonenen el baúl,
+        // en la MISMA carpeta donde está este index.html (igual que cancion.mp3.mp3).
+        // Solo agrega o quita líneas dentro de este arreglo. El "name" es lo que
+        // se ve en el panel de canciones.
+        const PLAYLIST_FILES = [
+            // { name: "Canción 4", src: "cancion4.mp3" },  ← copia esta línea para añadir más
+        ];
+
+        function pergIdbOpen() {
+    return new Promise((resolve, reject) => {
+        const req = indexedDB.open('refugio_cartas_db', 1);
+        req.onupgradeneeded = () => { if (!req.result.objectStoreNames.contains('kv')) req.result.createObjectStore('kv'); };
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(req.error);
+    });
+}
+async function pergIdbGet(key) {
+    const db = await pergIdbOpen();
+    return new Promise((resolve, reject) => {
+        const tx = db.transaction('kv', 'readonly');
+        const r = tx.objectStore('kv').get(key);
+        r.onsuccess = () => resolve(r.result);
+        r.onerror = () => reject(r.error);
+    });
+}
+async function pergIdbSet(key, value) {
+    const db = await pergIdbOpen();
+    return new Promise((resolve, reject) => {
+        const tx = db.transaction('kv', 'readwrite');
+        tx.objectStore('kv').put(value, key);
+        tx.oncomplete = () => resolve(true);
+        tx.onerror = () => reject(tx.error);
+    });
+}
+
+        let playlist = [];
+        let currentTrackIndex = -1;
+        let playlistAudio = null;
+        let playlistActive = false;
+
+        async function initPlaylist() {
+    playlist = PLAYLIST_FILES.map(t => ({ name: t.name, src: t.src }));
+    try {
+        const customTracks = await pergIdbGet('perg_playlist_custom');
+        if (customTracks && Array.isArray(customTracks)) {
+            playlist = playlist.concat(customTracks);
+        }
+    } catch (e) {
+        console.warn('No se pudieron cargar canciones guardadas:', e);
+    }
+    renderPlaylist();
+}
+
+        function playTrack(index) {
+            if (index < 0 || index >= playlist.length) return;
+            if (playlistAudio) {
+                playlistAudio.pause();
+                playlistAudio.src = '';
+            }
+            currentTrackIndex = index;
+            playlistActive = true;
+            playlistAudio = new Audio();
+            playlistAudio.volume = VOLUME_LEVEL;
+            playlistAudio.src = playlist[index].src;
+            playlistAudio.play().catch(e => console.warn('audio:', e));
+            playlistAudio.onended = () => {
+                // Siguiente pista en loop
+                const next = (currentTrackIndex + 1) % playlist.length;
+                playTrack(next);
+            };
+            renderPlaylist();
+        }
+
+        // Añade una canción elegida por el usuario desde su computador/celular
+        // (input file de "Añadir canción"). Esta función faltaba por completo
+        // en el código original: el <input onchange="addTrackFromFile(this)">
+        // la llamaba pero nunca existía, así que nunca pasaba nada.
+        function addTrackFromFile(inputEl) {
+    const file = inputEl.files && inputEl.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+        const base64Data = e.target.result;
+        const displayName = file.name.replace(/\.[^/.]+$/, '');
+        const newTrack = { name: displayName, src: base64Data };
+        playlist.push(newTrack);
+        renderPlaylist();
+        try {
+            const customTracks = (await pergIdbGet('perg_playlist_custom')) || [];
+            customTracks.push(newTrack);
+            await pergIdbSet('perg_playlist_custom', customTracks);
+        } catch (err) {
+            console.warn('No se pudo guardar la canción:', err);
+        }
+        if (!playlistAudio || playlistAudio.paused) {
+            playTrack(playlist.length - 1);
+        }
+    };
+    reader.readAsDataURL(file);
+    inputEl.value = '';
+}
+
+        // Elimina una canción de la playlist por su índice.
+        // Igual que addTrackFromFile, el botón ✕ de cada canción ya llamaba
+        // a removeTrack(i) pero la función no existía en ningún lado.
+        function removeTrack(index) {
+    if (index < 0 || index >= playlist.length) return;
+    if (index === currentTrackIndex) {
+        if (playlistAudio) {
+            playlistAudio.pause();
+            playlistAudio.src = '';
+        }
+        playlistAudio = null;
+        currentTrackIndex = -1;
+    } else if (index < currentTrackIndex) {
+        currentTrackIndex--;
+    }
+    const removed = playlist.splice(index, 1)[0];
+    renderPlaylist();
+    if (index >= PLAYLIST_FILES.length) {
+        pergIdbGet('perg_playlist_custom').then(customTracks => {
+            customTracks = customTracks || [];
+            const newCustom = customTracks.filter(t => t.src !== removed.src);
+            pergIdbSet('perg_playlist_custom', newCustom);
+        }).catch(err => console.warn('No se pudo actualizar canciones guardadas:', err));
+    }
+}
+        function renderPlaylist() {
+            const container = document.getElementById('playlist-tracks');
+            if (playlist.length === 0) {
+                container.innerHTML = '<div style="font-family:\'IM Fell English\',serif; font-size:11px; color:rgba(180,120,40,0.35); text-align:center; font-style:italic; padding:4px 0;">~ sin canciones aún ~</div>';
+                return;
+            }
+            container.innerHTML = playlist.map((t, i) => `
+                <div class="playlist-track ${i === currentTrackIndex ? 'playing' : ''}" onclick="playTrack(${i})">
+                    <span style="font-size:10px; color:rgba(180,120,40,${i===currentTrackIndex?'0.8':'0.3'}); min-width:14px;">${i===currentTrackIndex?'▶':(i+1)}</span>
+                    <span class="playlist-track-name">${t.name}</span>
+                    <button class="playlist-del" onclick="event.stopPropagation(); removeTrack(${i})">✕</button>
+                </div>
+            `).join('');
+        }
+
+        function togglePlaylist() {
+            const panel = document.getElementById('playlist-panel');
+            panel.classList.toggle('visible');
+        }
+
+        // Al abrir el baúl de cartas: detener la primera canción y activar playlist
+        function startPlaylistOnBaul() {
+            if (!firstSongStopped) {
+                firstSongStopped = true;
+                bgAudio.pause();
+                bgAudio.currentTime = 0;
+            }
+            // Si hay pistas en playlist y no está sonando nada, empezar
+            if (playlist.length > 0 && (!playlistAudio || playlistAudio.paused)) {
+                if (currentTrackIndex < 0) playTrack(0);
+                else playTrack(currentTrackIndex);
+            }
+            renderPlaylist();
+        }
+
+        function igniteInstantCinema() {
+            const inputKey = document.getElementById("portal-key").value;
+            if (inputKey.toLowerCase().trim() === THE_KEY) {
+                bgAudio.volume = VOLUME_LEVEL;
+                bgAudio.play().catch(err => console.warn("Audio bloqueado:", err));
+                document.getElementById("portal-gate").classList.add("scale-95", "opacity-0");
+                setTimeout(() => {
+                    document.getElementById("portal-gate").style.display = "none";
+                    document.getElementById("cinema-stage").classList.remove("hidden");
+                    isCinemaActive = true;
+                    initCanvas();
+                    animationLoop();
+                    renderScene();
+                    initPlaylist();
+                }, 800);
+            } else {
+                document.getElementById("portal-error").classList.remove("hidden");
+            }
+        }
+
+        class Petal {
+            constructor() {
+                this.x = Math.random() * window.innerWidth;
+                this.y = Math.random() * -window.innerHeight;
+                this.size = Math.random() * 5 + 3;
+                this.speedY = Math.random() * 0.9 + 0.4;
+                this.speedX = (Math.random() - 0.5) * 0.3;
+                this.opacity = Math.random() * 0.6 + 0.3;
+                this.oscillationSpeed = Math.random() * 0.02 + 0.01;
+                this.angle = Math.random() * Math.PI;
+                this.color = Math.random() > 0.4 ? `rgba(219, 39, 119, ${this.opacity})` : `rgba(139, 92, 246, ${this.opacity})`;
+            }
+            update() {
+                this.y += this.speedY;
+                this.angle += this.oscillationSpeed;
+                this.x += Math.sin(this.angle) * 0.3 + this.speedX;
+                if (this.y > window.innerHeight) { this.y = -10; this.x = Math.random() * window.innerWidth; }
+            }
+            draw() {
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                ctx.ellipse(this.x, this.y, this.size, this.size * 1.4, this.angle, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        function initCanvas() {
+            canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+            petals = [];
+            for (let i = 0; i < 55; i++) petals.push(new Petal());
+        }
+
+        function animationLoop() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            petals.forEach(p => { p.update(); p.draw(); });
+            requestAnimationFrame(animationLoop);
+        }
+
+        function renderScene() {
+            const currentData = cinematicScript[currentScene];
+            const narrationText = document.getElementById("scene-narration");
+            const tagText = document.getElementById("scene-tag");
+            const hudControls = document.getElementById("hud-controls");
+            narrationText.classList.remove("clear-text");
+            hudControls.style.opacity = "0";
+            setTimeout(() => {
+                tagText.innerText = currentData.tag;
+                narrationText.innerText = currentData.text;
+                narrationText.classList.add("clear-text");
+                setTimeout(() => { hudControls.style.opacity = "1"; }, 1200);
+            }, 600);
+            if (currentScene === cinematicScript.length - 1) {
+                document.getElementById("forward-btn").classList.add("hidden");
+                document.getElementById("destiny-choices").classList.remove("hidden");
+            }
+        }
+
+        function advanceScene() {
+            if (currentScene < cinematicScript.length - 1) { currentScene++; renderScene(); }
+        }
+
+        function revealEnding(choice) {
+            const narration = document.getElementById("scene-narration");
+            const notebook = document.getElementById("gothic-notebook");
+            if (choice === 'recuerdos') {
+                narration.innerText = "🧳 CONTINUARA.....?";
+                notebook.classList.add("hidden");
+                launchGalaxyHeart();
+            }
+        }
+
+        function saveFolio() {
+            const titleVal = document.getElementById("gothic-title-input").value;
+            const bodyVal = document.getElementById("gothic-body-input").value;
+            localStorage.setItem("yt_rpg_title", titleVal);
+            localStorage.setItem("yt_rpg_body", bodyVal);
+            const msg = document.getElementById("gothic-save-msg");
+            msg.innerText = "Folio guardado con éxito ✓";
+            msg.className = "text-emerald-400 font-bold ml-2";
+            setTimeout(() => msg.innerText = "", 1500);
+        }
+
+        window.addEventListener("resize", () => {
+            if (isCinemaActive) { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+        });
+
+        document.getElementById("portal-key").addEventListener("keypress", function(e) {
+            if (e.key === "Enter") igniteInstantCinema();
+        });
+
+        // ── CURSOR HEARTS ──
+        const chCanvas = document.getElementById('cursor-hearts-canvas');
+        const chCtx = chCanvas.getContext('2d');
+        let cursorHeartsActive = false;
+        let cursorX = window.innerWidth / 2, cursorY = window.innerHeight / 2;
+        let floatingHearts = [];
+
+        function resizeCHCanvas() {
+            chCanvas.width = window.innerWidth;
+            chCanvas.height = window.innerHeight;
+        }
+        resizeCHCanvas();
+        window.addEventListener('resize', resizeCHCanvas);
+
+        window.addEventListener('mousemove', e => { cursorX = e.clientX; cursorY = e.clientY; });
+        window.addEventListener('touchmove', e => {
+            cursorX = e.touches[0].clientX; cursorY = e.touches[0].clientY;
+        }, { passive: true });
+
+        class FloatingHeart {
+            constructor(x, y) {
+                this.x = x + (Math.random() - 0.5) * 60;
+                this.y = y + (Math.random() - 0.5) * 60;
+                this.size = 8 + Math.random() * 22;
+                this.alpha = 0.7 + Math.random() * 0.3;
+                this.vx = (Math.random() - 0.5) * 1.8;
+                this.vy = -(0.6 + Math.random() * 1.4);
+                this.life = 1.0;
+                this.decay = 0.008 + Math.random() * 0.012;
+                this.hue = 320 + Math.random() * 40;
+                this.rotation = (Math.random() - 0.5) * 0.4;
+                this.rotSpeed = (Math.random() - 0.5) * 0.04;
+            }
+            update() {
+                this.x += this.vx; this.y += this.vy;
+                this.vy -= 0.015; this.vx *= 0.99;
+                this.life -= this.decay; this.rotation += this.rotSpeed;
+            }
+            draw() {
+                if (this.life <= 0) return;
+                chCtx.save();
+                chCtx.globalAlpha = this.life * this.alpha;
+                chCtx.translate(this.x, this.y);
+                chCtx.rotate(this.rotation);
+                chCtx.scale(this.size / 20, this.size / 20);
+                chCtx.beginPath();
+                chCtx.moveTo(0, -6);
+                chCtx.bezierCurveTo(5, -12, 14, -4, 0, 6);
+                chCtx.bezierCurveTo(-14, -4, -5, -12, 0, -6);
+                chCtx.closePath();
+                const grad = chCtx.createRadialGradient(-2, -4, 0, 0, 0, 12);
+                grad.addColorStop(0, `hsla(${this.hue}, 100%, 85%, 1)`);
+                grad.addColorStop(1, `hsla(${this.hue - 20}, 100%, 55%, 1)`);
+                chCtx.fillStyle = grad;
+                chCtx.shadowColor = `hsla(${this.hue}, 100%, 70%, 0.6)`;
+                chCtx.shadowBlur = 8;
+                chCtx.fill();
+                chCtx.restore();
+            }
+        }
+
+        class CursorHeart {
+            constructor() { this.pulse = 0; }
+            draw(x, y) {
+                this.pulse += 0.08;
+                const s = 1 + Math.sin(this.pulse) * 0.15;
+                const size = 18 * s;
+                chCtx.save();
+                chCtx.translate(x, y);
+                chCtx.scale(size / 20, size / 20);
+                chCtx.beginPath();
+                chCtx.moveTo(0, -6);
+                chCtx.bezierCurveTo(5, -12, 14, -4, 0, 6);
+                chCtx.bezierCurveTo(-14, -4, -5, -12, 0, -6);
+                chCtx.closePath();
+                const grad = chCtx.createRadialGradient(-2, -4, 0, 0, 0, 12);
+                grad.addColorStop(0, 'rgba(255,180,210,0.95)');
+                grad.addColorStop(1, 'rgba(220,40,120,0.9)');
+                chCtx.fillStyle = grad;
+                chCtx.shadowColor = 'rgba(255,80,160,0.7)';
+                chCtx.shadowBlur = 14;
+                chCtx.fill();
+                chCtx.restore();
+            }
+        }
+
+        const mainCursorHeart = new CursorHeart();
+        let heartSpawnTimer = 0;
+
+        function cursorHeartsLoop() {
+            if (!cursorHeartsActive) return;
+            chCtx.clearRect(0, 0, chCanvas.width, chCanvas.height);
+            heartSpawnTimer++;
+            if (heartSpawnTimer % 6 === 0) {
+                floatingHearts.push(new FloatingHeart(cursorX, cursorY));
+                if (Math.random() < 0.4) {
+                    floatingHearts.push(new FloatingHeart(
+                        cursorX + (Math.random() - 0.5) * 120,
+                        cursorY + (Math.random() - 0.5) * 120
+                    ));
+                }
+            }
+            floatingHearts = floatingHearts.filter(h => h.life > 0);
+            floatingHearts.forEach(h => { h.update(); h.draw(); });
+            mainCursorHeart.draw(cursorX, cursorY);
+            requestAnimationFrame(cursorHeartsLoop);
+        }
+
+        function startCursorHearts() {
+            cursorHeartsActive = true;
+            chCanvas.style.display = 'block';
+            cursorHeartsLoop();
+        }
+
+        // ── GALAXIA → BIG BANG → CORAZÓN ──
+        let heartbeatCtx = null;
+        let heartbeatInterval = null;
+
+        function createHeartbeatSound() {
+            if (!heartbeatCtx) {
+                heartbeatCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            function playBeat(time, intensity) {
+                const osc = heartbeatCtx.createOscillator();
+                const gainNode = heartbeatCtx.createGain();
+                const filter = heartbeatCtx.createBiquadFilter();
+                filter.type = 'lowpass';
+                filter.frequency.value = 180;
+                osc.connect(filter);
+                filter.connect(gainNode);
+                gainNode.connect(heartbeatCtx.destination);
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(55, time);
+                osc.frequency.exponentialRampToValueAtTime(35, time + 0.12);
+                gainNode.gain.setValueAtTime(0, time);
+                gainNode.gain.linearRampToValueAtTime(intensity * 0.55, time + 0.025);
+                gainNode.gain.exponentialRampToValueAtTime(0.001, time + 0.22);
+                osc.start(time);
+                osc.stop(time + 0.25);
+            }
+            const now = heartbeatCtx.currentTime;
+            playBeat(now, 1.0);
+            playBeat(now + 0.16, 0.65);
+        }
+
+        function startHeartbeat() {
+            if (heartbeatInterval) return;
+            createHeartbeatSound();
+            heartbeatInterval = setInterval(() => { createHeartbeatSound(); }, 900);
+        }
+
+        function stopHeartbeat() {
+            if (heartbeatInterval) { clearInterval(heartbeatInterval); heartbeatInterval = null; }
+        }
+
+        function launchGalaxyHeart() {
+            const overlay = document.getElementById('galaxy-overlay');
+            overlay.style.display = 'block';
+
+            const gc = document.getElementById('gc');
+            const gctx = gc.getContext('2d');
+            let W, H, particles = [];
+            let mouse = { x: -9999, y: -9999 };
+
+            let phase = 'galaxy';
+            let phaseTimer = 0;
+            const GALAXY_DURATION = 240;
+            const BIGBANG_DURATION = 90;
+
+            overlay.style.cursor = 'default';
+            gc.style.cursor = 'default';
+
+            gc.addEventListener('mousemove', e => { mouse.x = e.clientX; mouse.y = e.clientY; cursorX = e.clientX; cursorY = e.clientY; });
+            gc.addEventListener('touchmove', e => {
+                e.preventDefault();
+                mouse.x = e.touches[0].clientX; mouse.y = e.touches[0].clientY;
+                cursorX = e.touches[0].clientX; cursorY = e.touches[0].clientY;
+            }, { passive: false });
+
+            function heartColor(bright) {
+                const rnd = Math.random();
+                if (rnd < 0.28) return [Math.floor(180 + bright*75), Math.floor(20 + bright*30), Math.floor(80 + bright*80)];
+                else if (rnd < 0.50) return [Math.floor(220 + bright*35), Math.floor(30 + bright*40), Math.floor(60 + bright*60)];
+                else if (rnd < 0.68) return [Math.floor(140 + bright*60), Math.floor(10 + bright*20), Math.floor(160 + bright*80)];
+                else if (rnd < 0.82) return [Math.floor(200 + bright*55), Math.floor(60 + bright*50), Math.floor(120 + bright*80)];
+                else return [Math.floor(255), Math.floor(100 + bright*80), Math.floor(150 + bright*80)];
+            }
+
+            function resize() {
+                W = gc.width = window.innerWidth;
+                H = gc.height = window.innerHeight;
+                initGalaxy();
+            }
+
+            function initGalaxy() {
+                particles = [];
+                const cx = W / 2, cy = H / 2;
+                for (let i = 0; i < 2000; i++) {
+                    const arm = Math.floor(Math.random() * 4);
+                    const armAngle = (arm / 4) * Math.PI * 2;
+                    const t = Math.pow(Math.random(), 0.6);
+                    const r = 20 + t * Math.min(W, H) * 0.32;
+                    const spread = (1 - t) * 0.6 + 0.05;
+                    const theta = armAngle + t * Math.PI * 3.5 + (Math.random() - 0.5) * spread * 3;
+                    const tilt = (Math.random() - 0.5) * 0.22;
+                    const x = cx + r * Math.cos(theta);
+                    const y = cy + r * Math.sin(theta) * 0.42 + r * tilt * 0.3;
+                    const bright = 0.4 + Math.random() * 0.6;
+                    const color = heartColor(bright);
+                    particles.push({ ox: x, oy: y, x, y, cx, cy, vx: 0, vy: 0, angle: theta, speed: (0.0005 + Math.random() * 0.001), r: 0.3 + Math.random() * 1.6, alpha: 0.3 + bright * 0.7, color, dist: r, tilt, arm, t, bbvx: 0, bbvy: 0, galaxy: 0 });
+                }
+                const g2x = cx - W * 0.28, g2y = cy - H * 0.22;
+                for (let i = 0; i < 900; i++) {
+                    const arm = Math.floor(Math.random() * 3);
+                    const armAngle = (arm / 3) * Math.PI * 2;
+                    const t = Math.pow(Math.random(), 0.6);
+                    const r = 8 + t * Math.min(W, H) * 0.12;
+                    const spread = (1 - t) * 0.7 + 0.05;
+                    const theta = armAngle + t * Math.PI * 3 + (Math.random() - 0.5) * spread * 3;
+                    const tilt = (Math.random() - 0.5) * 0.28;
+                    const x = g2x + r * Math.cos(theta);
+                    const y = g2y + r * Math.sin(theta) * 0.45 + r * tilt * 0.3;
+                    const bright = 0.35 + Math.random() * 0.55;
+                    const color = heartColor(bright);
+                    particles.push({ ox: x, oy: y, x, y, cx: g2x, cy: g2y, vx: 0, vy: 0, angle: theta, speed: (0.0006 + Math.random() * 0.0012), r: 0.25 + Math.random() * 1.2, alpha: 0.25 + bright * 0.65, color, dist: r, tilt, arm, t, bbvx: 0, bbvy: 0, galaxy: 1 });
+                }
+                const g3x = cx + W * 0.30, g3y = cy + H * 0.18;
+                for (let i = 0; i < 800; i++) {
+                    const arm = Math.floor(Math.random() * 3);
+                    const armAngle = (arm / 3) * Math.PI * 2;
+                    const t = Math.pow(Math.random(), 0.6);
+                    const r = 6 + t * Math.min(W, H) * 0.10;
+                    const spread = (1 - t) * 0.7 + 0.05;
+                    const theta = armAngle + t * Math.PI * 2.8 + (Math.random() - 0.5) * spread * 3;
+                    const tilt = (Math.random() - 0.5) * 0.25;
+                    const x = g3x + r * Math.cos(theta);
+                    const y = g3y + r * Math.sin(theta) * 0.48 + r * tilt * 0.3;
+                    const bright = 0.3 + Math.random() * 0.5;
+                    const color = heartColor(bright);
+                    particles.push({ ox: x, oy: y, x, y, cx: g3x, cy: g3y, vx: 0, vy: 0, angle: theta, speed: (0.0007 + Math.random() * 0.0013), r: 0.2 + Math.random() * 1.0, alpha: 0.2 + bright * 0.6, color, dist: r, tilt, arm, t, bbvx: 0, bbvy: 0, galaxy: 2 });
+                }
+                const planetDefs = [
+                    { dist: Math.min(W,H)*0.22, speed: 0.0006, r: 4, hue: [220,80,180] },
+                    { dist: Math.min(W,H)*0.30, speed: 0.0004, r: 5.5, hue: [180,40,120] },
+                    { dist: Math.min(W,H)*0.38, speed: 0.00025, r: 3.5, hue: [255,100,160] },
+                    { dist: Math.min(W,H)*0.16, speed: 0.0009, r: 2.8, hue: [140,20,180] },
+                    { dist: Math.min(W,H)*0.44, speed: 0.00018, r: 6, hue: [200,50,100] },
+                ];
+                for (const pd of planetDefs) {
+                    const initAngle = Math.random() * Math.PI * 2;
+                    particles.push({ ox: cx + pd.dist * Math.cos(initAngle), oy: cy + pd.dist * Math.sin(initAngle) * 0.42, x: cx + pd.dist * Math.cos(initAngle), y: cy + pd.dist * Math.sin(initAngle) * 0.42, cx, cy, vx:0, vy:0, angle: initAngle, speed: pd.speed, r: pd.r, alpha: 0.85, color: pd.hue, dist: pd.dist, tilt: 0, arm: 0, t: 0.5, isPlanet: true, bbvx: 0, bbvy: 0, galaxy: 0 });
+                }
+                for (let i = 0; i < 500; i++) {
+                    particles.push({ ox: Math.random() * W, oy: Math.random() * H, x: Math.random() * W, y: Math.random() * H, cx: W/2, cy: H/2, vx: 0, vy: 0, angle: 0, speed: 0, r: 0.2 + Math.random() * 0.8, alpha: 0.1 + Math.random() * 0.5, color: [255, 200, 220], dist: 0, tilt: 0, star: true, bbvx: 0, bbvy: 0, galaxy: -1 });
+                }
+            }
+
+            function heartXY(rad) {
+                return [Math.pow(Math.sin(rad), 3), -(15*Math.cos(rad) - 5*Math.cos(2*rad) - 2*Math.cos(3*rad) - Math.cos(4*rad)) / 17];
+            }
+            function heartPt(t) {
+                const cx = W/2, cy = H/2;
+                const sx = W * 0.26, sy = H * 0.33;
+                const p = heartXY(t);
+                return [cx + p[0]*sx, cy + p[1]*sy];
+            }
+
+            const rand = Math.random;
+            let heartLines = [], heartParticles = [];
+
+            function initHeart() {
+                const cx = W/2, cy = H/2;
+                heartLines = []; heartParticles = [];
+                const NUM_LINES = 1200;
+                for (let i = 0; i < NUM_LINES; i++) {
+                    const t1 = rand()*2*Math.PI, t2 = rand()*2*Math.PI;
+                    const p1 = heartPt(t1), p2 = heartPt(t2);
+                    const mix1 = rand(), mix2 = rand();
+                    const x1 = p1[0]*(1-mix1)+cx*mix1, y1 = p1[1]*(1-mix1)+cy*mix1;
+                    const x2 = p2[0]*(1-mix2)+cx*mix2, y2 = p2[1]*(1-mix2)+cy*mix2;
+                    const hue = 295+rand()*70, maxLife = 25+rand()*70;
+                    heartLines.push({ x1, y1, x2, y2, hue, life: rand()*maxLife, maxLife, lw: 0.3+rand()*0.9 });
+                }
+                const NUM_P = 5000;
+                for (let i = 0; i < NUM_P; i++) {
+                    const t = rand()*2*Math.PI, base = heartPt(t);
+                    const mix = rand();
+                    const x = base[0]*(1-mix)+cx*mix+(rand()-.5)*15;
+                    const y = base[1]*(1-mix)+cy*mix+(rand()-.5)*15;
+                    const life = 30+rand()*120;
+                    heartParticles.push({ x, y, life, maxLife: life, hue: 295+rand()*70, size: 0.4+rand()*1.3, vx:(rand()-.5)*.7, vy:(rand()-.5)*.7 });
+                }
+                startHeartbeat();
+            }
+
+            function respawnLine(l) {
+                const cx = W/2, cy = H/2;
+                const t1 = rand()*2*Math.PI, t2 = rand()*2*Math.PI;
+                const p1 = heartPt(t1), p2 = heartPt(t2);
+                const mix1 = rand(), mix2 = rand();
+                l.x1 = p1[0]*(1-mix1)+cx*mix1; l.y1 = p1[1]*(1-mix1)+cy*mix1;
+                l.x2 = p2[0]*(1-mix2)+cx*mix2; l.y2 = p2[1]*(1-mix2)+cy*mix2;
+                l.hue = 295+rand()*70; l.maxLife = 25+rand()*70; l.life = l.maxLife;
+            }
+            function respawnParticle(p) {
+                const cx = W/2, cy = H/2;
+                const t = rand()*2*Math.PI, base = heartPt(t);
+                const mix = rand();
+                p.x = base[0]*(1-mix)+cx*mix+(rand()-.5)*15;
+                p.y = base[1]*(1-mix)+cy*mix+(rand()-.5)*15;
+                p.life = 30+rand()*120; p.maxLife = p.life;
+                p.hue = 295+rand()*70; p.vx = (rand()-.5)*.7; p.vy = (rand()-.5)*.7;
+            }
+
+            let beat = 0, beatDir = 1, heartScale = 1;
+            let heartAlpha = 0;
+            let pergShown = false;
+
+            function triggerBigBang() {
+                const cx = W/2, cy = H/2;
+                for (let p of particles) {
+                    const dx = p.x - cx, dy = p.y - cy;
+                    const dist = Math.sqrt(dx*dx + dy*dy) || 1;
+                    const speed = 8 + Math.random() * 18;
+                    p.bbvx = (dx / dist) * speed + (Math.random()-0.5)*4;
+                    p.bbvy = (dy / dist) * speed + (Math.random()-0.5)*4;
+                }
+            }
+
+            function draw() {
+                phaseTimer++;
+                if (phase === 'galaxy') {
+                    gctx.fillStyle = 'rgba(0,0,0,0.18)';
+                    gctx.fillRect(0, 0, W, H);
+                    drawGalaxy();
+                    if (phaseTimer > GALAXY_DURATION) { phase = 'bigbang'; phaseTimer = 0; triggerBigBang(); }
+                } else if (phase === 'bigbang') {
+                    gctx.fillStyle = 'rgba(0,0,0,0.08)';
+                    gctx.fillRect(0, 0, W, H);
+                    if (phaseTimer < 12) {
+                        gctx.fillStyle = `rgba(255,255,255,${0.55 - phaseTimer*0.045})`;
+                        gctx.fillRect(0, 0, W, H);
+                    }
+                    drawBigBang();
+                    if (phaseTimer > BIGBANG_DURATION) { phase = 'heart'; phaseTimer = 0; initHeart(); heartAlpha = 0; }
+                } else if (phase === 'heart') {
+                    heartAlpha = Math.min(1, heartAlpha + 0.012);
+                    gctx.fillStyle = 'rgba(0,0,0,0.12)';
+                    gctx.fillRect(0, 0, W, H);
+                    drawHeart();
+                    if (!pergShown && heartAlpha >= 0.3) {
+                        if (!cursorHeartsActive) startCursorHearts();
+                    }
+                    if (!pergShown && heartAlpha >= 1) {
+                        pergShown = true;
+                        setTimeout(() => { document.getElementById('pergamino-btn-float').style.display = 'block'; }, 1200);
+                    }
+                }
+                requestAnimationFrame(draw);
+            }
+
+            function drawGalaxy() {
+                const mx = mouse.x, my = mouse.y;
+                const RADIUS = 120, FORCE = 60;
+                for (let p of particles) {
+                    if (p.star) {
+                    } else if (p.isPlanet) {
+                        p.angle += p.speed * 1.6;
+                        p.ox = p.cx + p.dist * Math.cos(p.angle);
+                        p.oy = p.cy + p.dist * Math.sin(p.angle) * 0.42;
+                    } else {
+                        p.angle += p.speed * 1.5;
+                        const rx = p.dist * Math.cos(p.angle);
+                        const ry = p.dist * Math.sin(p.angle) * 0.45 + p.dist * p.tilt * 0.3;
+                        p.ox = p.cx + rx; p.oy = p.cy + ry;
+                    }
+                    if (!p.star) {
+                        const dx = p.ox - mx, dy = p.oy - my;
+                        const dist = Math.sqrt(dx*dx + dy*dy);
+                        if (dist < RADIUS && dist > 0) {
+                            const factor = (1 - dist/RADIUS) * FORCE;
+                            p.vx += (dx/dist)*factor*0.08; p.vy += (dy/dist)*factor*0.08;
+                        }
+                        p.vx *= 0.88; p.vy *= 0.88;
+                        p.x += p.vx + (p.ox - p.x)*0.04;
+                        p.y += p.vy + (p.oy - p.y)*0.04;
+                    } else {
+                        p.x = p.ox; p.y = p.oy;
+                    }
+                    const [r,g,b] = p.color;
+                    if (p.isPlanet) {
+                        gctx.beginPath(); gctx.arc(p.x, p.y, p.r + 2, 0, Math.PI*2);
+                        gctx.fillStyle = `rgba(${r},${g},${b},0.15)`; gctx.fill();
+                        gctx.beginPath(); gctx.arc(p.x, p.y, p.r, 0, Math.PI*2);
+                        gctx.fillStyle = `rgba(${r},${g},${b},${p.alpha})`; gctx.fill();
+                    } else {
+                        gctx.beginPath(); gctx.arc(p.x, p.y, p.r, 0, Math.PI*2);
+                        gctx.fillStyle = `rgba(${r},${g},${b},${p.alpha})`; gctx.fill();
+                    }
+                }
+            }
+
+            function drawBigBang() {
+                for (let p of particles) {
+                    p.x += p.bbvx; p.y += p.bbvy;
+                    p.bbvx *= 0.97; p.bbvy *= 0.97;
+                    const [r,g,b] = p.color;
+                    const fade = Math.max(0, 1 - phaseTimer/BIGBANG_DURATION);
+                    gctx.beginPath(); gctx.arc(p.x, p.y, p.r, 0, Math.PI*2);
+                    gctx.fillStyle = `rgba(${r},${g},${b},${p.alpha * fade})`; gctx.fill();
+                }
+            }
+
+            function drawHeart() {
+                const cx = W/2, cy = H/2;
+                beat += beatDir * 0.028;
+                if (beat > 1) beatDir = -1;
+                if (beat < 0) beatDir = 1;
+                heartScale = 1 + beat * 0.05;
+                gctx.save();
+                gctx.globalAlpha = heartAlpha;
+                gctx.translate(cx, cy); gctx.scale(heartScale, heartScale); gctx.translate(-cx, -cy);
+                for (let i = 0; i < heartLines.length; i++) {
+                    const l = heartLines[i];
+                    l.life -= 2.5;
+                    if (l.life <= 0) respawnLine(l);
+                    const alpha = Math.sin((l.life/l.maxLife)*Math.PI) * 0.65;
+                    gctx.beginPath(); gctx.moveTo(l.x1,l.y1); gctx.lineTo(l.x2,l.y2);
+                    gctx.strokeStyle = `hsla(${l.hue},100%,65%,${alpha})`;
+                    gctx.lineWidth = l.lw; gctx.stroke();
+                }
+                for (let i = 0; i < heartParticles.length; i++) {
+                    const p = heartParticles[i];
+                    p.life -= 2;
+                    if (p.life <= 0) respawnParticle(p);
+                    p.x += p.vx; p.y += p.vy; p.vx *= 0.97; p.vy *= 0.97;
+                    const alpha = Math.sin((p.life/p.maxLife)*Math.PI) * 0.9;
+                    const s = p.size*(0.5+0.5*Math.sin((p.life/p.maxLife)*Math.PI));
+                    gctx.beginPath(); gctx.arc(p.x,p.y,s,0,Math.PI*2);
+                    gctx.fillStyle = `hsla(${p.hue},100%,72%,${alpha})`; gctx.fill();
+                }
+                gctx.restore();
+            }
+
+            window.addEventListener('resize', resize);
+            resize();
+            draw();
+            initPergParticles();
+        }
+
+        // ── PERGAMINO ──
+        let sobreAbierto = false;
+
+        function abrirPergamino() {
+            cursorHeartsActive = false;
+            chCanvas.style.display = 'none';
+            stopHeartbeat();
+            document.getElementById('pergamino-btn-float').style.display = 'none';
+            sobreAbierto = false;
+            document.getElementById('envelope').classList.remove('open');
+            document.getElementById('letter-card').classList.remove('risen');
+            const ov = document.getElementById('pergamino-overlay');
+            ov.classList.add('active');
+        }
+
+        document.getElementById('pergamino-overlay').addEventListener('click', function(e) {
+            if (e.target === this) { cerrarPergaminoOverlay(); }
+        });
+
+        function cerrarPergaminoOverlay() {
+            document.getElementById('pergamino-overlay').classList.remove('active');
+            document.getElementById('galaxy-overlay').style.display = 'block';
+            document.getElementById('pergamino-btn-float').style.display = 'block';
+        }
+
+        function abrirSobre() {
+            if (sobreAbierto) return;
+            sobreAbierto = true;
+            document.getElementById('envelope').classList.add('open');
+            const flap = document.getElementById('svgFlap');
+            flap.style.transition = 'transform 0.9s cubic-bezier(.4,0,.2,1)';
+            flap.style.transformOrigin = '160px 2px';
+            flap.style.transform = 'rotateX(180deg)';
+            setTimeout(() => {
+                const carta = document.getElementById('letter-card');
+                carta.classList.add('risen');
+            }, 600);
+        }
+
+        function irACartas() {
+            document.getElementById('pergamino-overlay').classList.remove('active');
+            document.getElementById('cartas-panel').classList.add('active');
+            document.getElementById('btn-cerrar').classList.add('active');
+            // ── DETENER primera canción al abrir el baúl ──
+            startPlaylistOnBaul();
+            renderCartas();
+            setTimeout(() => {
+                document.getElementById('btn-fin-cartas').style.display = 'block';
+                document.getElementById('btn-playlist-float').style.display = 'block';
+            }, 800);
+        }
+
+        function cerrarCartas() {
+            document.getElementById('cartas-panel').classList.remove('active');
+            document.getElementById('btn-cerrar').classList.remove('active');
+            document.getElementById('btn-fin-cartas').style.display = 'none';
+            document.getElementById('btn-playlist-float').style.display = 'none';
+            document.getElementById('playlist-panel').classList.remove('visible');
+            document.getElementById('galaxy-overlay').style.display = 'block';
+            sobreAbierto = false;
+            document.getElementById('pergamino-btn-float').style.display = 'block';
+            if (!cursorHeartsActive) startCursorHearts();
+        }
+
+        function irAPantallaFinal() {
+            document.getElementById('cartas-panel').classList.remove('active');
+            document.getElementById('btn-cerrar').classList.remove('active');
+            document.getElementById('btn-fin-cartas').style.display = 'none';
+            document.getElementById('btn-playlist-float').style.display = 'none';
+            document.getElementById('playlist-panel').classList.remove('visible');
+            const pf = document.getElementById('pantalla-final');
+            pf.style.display = 'flex';
+            initGothicRose();
+            setTimeout(() => {
+                document.getElementById('pensando-titulo').style.opacity = '1';
+                document.getElementById('pensando-titulo').style.transform = 'scale(1)';
+                document.getElementById('pensando-linea').style.opacity = '1';
+                document.getElementById('pensando-btn-wrap').style.opacity = '1';
+            }, 200);
+        }
+
+        function volverAlInicio() {
+            const pf = document.getElementById('pantalla-final');
+            pf.style.transition = 'opacity 1.2s ease';
+            pf.style.opacity = '0';
+            setTimeout(() => { window.location.reload(); }, 1200);
+        }
+
+        // ── ROSA GÓTICA ──
+        function initGothicRose() {
+            const rc = document.getElementById('gothic-rose-canvas');
+            const rctx = rc.getContext('2d');
+            rc.width = window.innerWidth;
+            rc.height = window.innerHeight;
+            const W = rc.width, H = rc.height;
+            const cx = W / 2;
+            const roseBaseY = H * 0.62;
+            let tick = 0;
+            let growAnim = 0;
+            let fallingPetals = [];
+            for (let i = 0; i < 18; i++) { fallingPetals.push(mkFallingPetal(true)); }
+
+            function mkFallingPetal(init) {
+                const ox = cx + (Math.random() - 0.5) * 320;
+                const oy = roseBaseY - 120;
+                return { x: ox, y: init ? oy + Math.random() * 260 : oy, vx: (Math.random() - 0.5) * 1.0, vy: 0.5 + Math.random() * 1.2, rotation: Math.random() * Math.PI * 2, rotSpeed: (Math.random() - 0.5) * 0.05, size: 7 + Math.random() * 11, alpha: 0.55 + Math.random() * 0.45, sway: Math.random() * Math.PI * 2, swaySpeed: 0.018 + Math.random() * 0.022 };
+            }
+
+            function drawFlatRose(rctx, cx, cy, R, alpha, t) {
+                rctx.save(); rctx.globalAlpha = alpha; rctx.translate(cx, cy);
+                const beat = 1 + Math.sin(t * 1.1) * 0.018;
+                for (let i = 0; i < 5; i++) {
+                    const angle = (i / 5) * Math.PI * 2 + 0.3;
+                    rctx.save(); rctx.rotate(angle);
+                    rctx.beginPath(); rctx.moveTo(0, 0);
+                    const sw = R * 0.18, sh = R * 0.55;
+                    rctx.bezierCurveTo(-sw, sh * 0.3, -sw * 0.6, sh * 0.8, 0, sh);
+                    rctx.bezierCurveTo(sw * 0.6, sh * 0.8, sw, sh * 0.3, 0, 0);
+                    rctx.fillStyle = '#1a4a0a'; rctx.fill();
+                    rctx.beginPath(); rctx.moveTo(0, 0); rctx.lineTo(0, sh);
+                    rctx.strokeStyle = 'rgba(8,25,4,0.5)'; rctx.lineWidth = 0.7; rctx.stroke();
+                    rctx.restore();
+                }
+                const petalLayers = [
+                    { n: 8, r: R * 0.95 * beat, pw: 0.48, ph: 0.68, h1: 0, h2: 8, l1: 18, l2: 32 },
+                    { n: 7, r: R * 0.74 * beat, pw: 0.44, ph: 0.62, h1: 2, h2: 5, l1: 22, l2: 35 },
+                    { n: 6, r: R * 0.55 * beat, pw: 0.40, ph: 0.56, h1: 4, h2: 3, l1: 26, l2: 40 },
+                    { n: 5, r: R * 0.38 * beat, pw: 0.38, ph: 0.50, h1: 5, h2: 2, l1: 30, l2: 44 },
+                    { n: 4, r: R * 0.22 * beat, pw: 0.34, ph: 0.44, h1: 6, h2: 0, l1: 34, l2: 46 },
+                    { n: 3, r: R * 0.10 * beat, pw: 0.28, ph: 0.36, h1: 6, h2: 0, l1: 38, l2: 48 },
+                ];
+                for (const layer of petalLayers) {
+                    for (let i = 0; i < layer.n; i++) {
+                        const angle = (i / layer.n) * Math.PI * 2 + (layer.n * 0.25);
+                        const px = Math.cos(angle) * layer.r * 0.28, py = Math.sin(angle) * layer.r * 0.28;
+                        rctx.save(); rctx.translate(px, py); rctx.rotate(angle + Math.PI * 0.5);
+                        const pw = layer.r * layer.pw, ph = layer.r * layer.ph;
+                        rctx.beginPath(); rctx.moveTo(0, 0);
+                        rctx.bezierCurveTo(-pw * 0.9, -ph * 0.25, -pw * 0.75, -ph * 0.85, 0, -ph);
+                        rctx.bezierCurveTo(pw * 0.75, -ph * 0.85, pw * 0.9, -ph * 0.25, 0, 0);
+                        const pg = rctx.createLinearGradient(0, 0, 0, -ph);
+                        pg.addColorStop(0, `hsl(${layer.h1}, 90%, ${layer.l1}%)`);
+                        pg.addColorStop(0.5, `hsl(${layer.h2 + 2}, 85%, ${layer.l1 + 8}%)`);
+                        pg.addColorStop(1, `hsl(${layer.h2 + 5}, 78%, ${layer.l2}%)`);
+                        rctx.fillStyle = pg; rctx.shadowColor = 'rgba(80,0,0,0.35)'; rctx.shadowBlur = 4; rctx.fill();
+                        rctx.strokeStyle = `rgba(40,0,0,0.22)`; rctx.lineWidth = 0.6; rctx.stroke();
+                        rctx.restore();
+                    }
+                }
+                const cg = rctx.createRadialGradient(0, 0, 0, 0, 0, R * 0.09);
+                cg.addColorStop(0, 'rgba(20,2,2,0.95)'); cg.addColorStop(1, 'rgba(60,5,5,0.7)');
+                rctx.beginPath(); rctx.arc(0, 0, R * 0.09, 0, Math.PI * 2); rctx.fillStyle = cg; rctx.fill();
+                rctx.restore();
+            }
+
+            function drawLeafGroup(rctx, cx, cy, side, grow, t) {
+                rctx.save(); rctx.globalAlpha = grow * 0.9; rctx.translate(cx, cy);
+                const sway = Math.sin(t * 0.5 + side) * 2 * grow;
+                const angle = side > 0 ? Math.PI * 0.25 : Math.PI * 0.75;
+                const len = 55 * grow, w = 20 * grow;
+                rctx.save(); rctx.rotate(angle + sway * 0.04);
+                rctx.beginPath(); rctx.moveTo(0, 0);
+                rctx.bezierCurveTo(-w, -len * 0.35, -w * 0.5, -len * 0.82, 0, -len);
+                rctx.bezierCurveTo(w * 0.5, -len * 0.82, w, -len * 0.35, 0, 0);
+                const lg = rctx.createLinearGradient(0, 0, 0, -len);
+                lg.addColorStop(0, 'rgba(12,40,4,0.9)'); lg.addColorStop(0.5, 'rgba(22,65,8,0.88)'); lg.addColorStop(1, 'rgba(10,32,4,0.75)');
+                rctx.fillStyle = lg; rctx.fill();
+                rctx.beginPath(); rctx.moveTo(0, 0); rctx.lineTo(0, -len);
+                rctx.strokeStyle = 'rgba(4,20,2,0.45)'; rctx.lineWidth = 0.9; rctx.stroke();
+                for (let j = 0; j < 3; j++) {
+                    const frac = 0.25 + j * 0.22, sy = -len * frac;
+                    const sp = j % 2 === 0 ? 1 : -1;
+                    rctx.beginPath(); rctx.moveTo(0, sy); rctx.lineTo(sp * 7 * grow, sy - 4 * grow);
+                    rctx.strokeStyle = `rgba(50,20,4,${0.4 * grow})`; rctx.lineWidth = 0.7; rctx.stroke();
+                }
+                rctx.restore(); rctx.restore();
+            }
+
+            function drawFallingPetals(grow) {
+                if (tick % 20 === 0 && grow > 0.6) { fallingPetals.push(mkFallingPetal(false)); }
+                for (const p of fallingPetals) {
+                    p.sway += p.swaySpeed; p.x += p.vx + Math.sin(p.sway) * 0.55; p.y += p.vy; p.rotation += p.rotSpeed;
+                    if (p.y > H + 30) { Object.assign(p, mkFallingPetal(false)); }
+                    rctx.save(); rctx.globalAlpha = p.alpha * grow; rctx.translate(p.x, p.y); rctx.rotate(p.rotation); rctx.scale(p.size / 20, p.size / 20);
+                    rctx.beginPath(); rctx.moveTo(0, 0);
+                    rctx.bezierCurveTo(-8, -5, -7, -14, 0, -16); rctx.bezierCurveTo(7, -14, 8, -5, 0, 0);
+                    const pg = rctx.createLinearGradient(0, 0, 0, -16);
+                    pg.addColorStop(0, 'hsl(5, 85%, 22%)'); pg.addColorStop(1, 'hsl(8, 78%, 38%)');
+                    rctx.fillStyle = pg; rctx.fill(); rctx.restore();
+                }
+            }
+
+            function loop() {
+                tick++; growAnim = Math.min(1, growAnim + 0.012);
+                const t = tick * 0.016;
+                rctx.clearRect(0, 0, W, H);
+                const g = growAnim;
+                const mainR = Math.min(W, H) * 0.20 * g;
+                const mainCY = roseBaseY - mainR * 0.05;
+                const sideR = mainR * 0.72;
+                const leftX = cx - mainR * 0.88, leftY = roseBaseY + mainR * 0.52;
+                const rightX = cx + mainR * 0.88, rightY = roseBaseY + mainR * 0.38;
+                if (g > 0.2) {
+                    drawLeafGroup(rctx, leftX - sideR * 0.3, leftY - sideR * 0.2, -1, g, t);
+                    drawLeafGroup(rctx, rightX + sideR * 0.3, rightY - sideR * 0.2, 1, g, t);
+                }
+                drawFallingPetals(g);
+                drawFlatRose(rctx, leftX, leftY, sideR, 0.88 * g, t + 0.5);
+                drawFlatRose(rctx, rightX, rightY, sideR * 0.88, 0.82 * g, t + 1.1);
+                drawFlatRose(rctx, cx, mainCY, mainR, g, t);
+                requestAnimationFrame(loop);
+            }
+            loop();
+        }
+
+        // ── NUEVA CARTA ──
+        function toggleNuevaCarta() {
+            const wrap = document.getElementById('nueva-carta-wrap');
+            const btn = document.getElementById('btn-nueva-carta-toggle');
+            if (wrap.classList.contains('visible')) {
+                wrap.classList.remove('visible');
+                btn.textContent = '✒ añadir carta';
+            } else {
+                wrap.classList.add('visible');
+                btn.textContent = '✕ cerrar';
+                wrap.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        }
+
+        document.getElementById('nc-imgs').addEventListener('change', function() {
+            const preview = document.getElementById('nc-preview');
+            preview.innerHTML = '';
+            Array.from(this.files).forEach(file => {
+                const reader = new FileReader();
+                reader.onload = e => {
+                    const img = document.createElement('img');
+                    img.src = e.target.result;
+                    img.className = 'img-preview-thumb';
+                    preview.appendChild(img);
+                };
+                reader.readAsDataURL(file);
+            });
+        });
+
+        async function guardarCarta() {
+            const titulo = document.getElementById('nc-titulo').value.trim();
+            const cuerpo = document.getElementById('nc-cuerpo').value.trim();
+            if (!titulo && !cuerpo) return;
+            const imgFiles = document.getElementById('nc-imgs').files;
+            const msg = document.getElementById('nc-msg');
+            msg.style.color = '';
+            msg.innerText = imgFiles.length ? 'Procesando imágenes...' : '';
+
+            // Redimensiona TODAS las imágenes antes de guardarlas (evita llenar localStorage)
+            const imgs = await Promise.all(Array.from(imgFiles).map(file => resizeImageFile(file)));
+
+            const cartas = JSON.parse(localStorage.getItem('perg_cartas') || '[]');
+            cartas.push({ id: Date.now(), titulo, cuerpo, imgs, sepImg: null, fecha: new Date().toLocaleDateString('es-ES', {day:'numeric', month:'long', year:'numeric'}) });
+            const ok = guardarEnLocalStorage(cartas, msg);
+            if (!ok) return;
+
+            document.getElementById('nc-titulo').value = '';
+            document.getElementById('nc-cuerpo').value = '';
+            document.getElementById('nc-imgs').value = '';
+            document.getElementById('nc-preview').innerHTML = '';
+            msg.innerText = '✓ Carta sellada con éxito';
+            setTimeout(() => msg.innerText = '', 2000);
+            document.getElementById('nueva-carta-wrap').classList.remove('visible');
+            document.getElementById('btn-nueva-carta-toggle').textContent = '✒ añadir carta';
+            renderCartas();
+        }
+
+        // ── EDITAR CARTA ──
+        // Almacena temporalmente las imágenes de la carta que se está editando
+        const _editImgs = {}; // { [cartaId]: [base64, base64, ...] }
+
+        function toggleEditCarta(id) {
+            const form = document.getElementById('edit-form-' + id);
+            if (!form) return;
+            const opening = !form.classList.contains('visible');
+            form.classList.toggle('visible');
+            if (opening) {
+                const cartas = JSON.parse(localStorage.getItem('perg_cartas') || '[]');
+                const c = cartas.find(x => x.id === id);
+                if (c) {
+                    document.getElementById('edit-titulo-' + id).value = c.titulo || '';
+                    document.getElementById('edit-cuerpo-' + id).value = c.cuerpo || '';
+                    // Cargar copia de imágenes al estado temporal
+                    _editImgs[id] = [...(c.imgs || [])];
+                    renderEditImgs(id);
+                }
+            }
+        }
+
+        // Renderiza la grilla de imágenes dentro del formulario de edición
+        function renderEditImgs(id) {
+            const container = document.getElementById('edit-imgs-grid-' + id);
+            if (!container) return;
+            const imgs = _editImgs[id] || [];
+            if (imgs.length === 0) {
+                container.innerHTML = '<span style="font-size:11px; color:rgba(120,60,20,0.4); font-style:italic;">~ sin imágenes ~</span>';
+                return;
+            }
+            container.innerHTML = imgs.map((src, i) => `
+                <div style="position:relative; display:inline-block; margin:4px;">
+                    <img src="${src}" style="width:80px; height:80px; object-fit:cover; border-radius:3px; border:1px solid rgba(160,80,20,0.25); display:block; filter:sepia(10%);">
+                    <div style="display:flex; gap:2px; margin-top:3px; justify-content:center; flex-wrap:wrap;">
+                        ${i > 0 ? `<button onclick="moverEditImg(${id},${i},-1)" title="Mover izquierda" style="font-size:11px; background:none; border:1px solid rgba(160,80,20,0.2); color:rgba(100,50,10,0.55); border-radius:2px; padding:1px 5px; cursor:pointer;">←</button>` : ''}
+                        ${i < imgs.length-1 ? `<button onclick="moverEditImg(${id},${i},1)" title="Mover derecha" style="font-size:11px; background:none; border:1px solid rgba(160,80,20,0.2); color:rgba(100,50,10,0.55); border-radius:2px; padding:1px 5px; cursor:pointer;">→</button>` : ''}
+                        <button onclick="cambiarEditImg(${id},${i})" title="Cambiar esta imagen" style="font-size:10px; background:none; border:1px solid rgba(160,80,20,0.2); color:rgba(100,50,10,0.55); border-radius:2px; padding:1px 5px; cursor:pointer;">✎</button>
+                        <button onclick="eliminarEditImg(${id},${i})" title="Eliminar esta imagen" style="font-size:10px; background:none; border:1px solid rgba(180,40,20,0.2); color:rgba(160,40,20,0.45); border-radius:2px; padding:1px 5px; cursor:pointer;">✕</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function moverEditImg(id, idx, dir) {
+            const imgs = _editImgs[id];
+            if (!imgs) return;
+            const newIdx = idx + dir;
+            if (newIdx < 0 || newIdx >= imgs.length) return;
+            [imgs[idx], imgs[newIdx]] = [imgs[newIdx], imgs[idx]];
+            renderEditImgs(id);
+        }
+
+        function eliminarEditImg(id, idx) {
+            if (!_editImgs[id]) return;
+            _editImgs[id].splice(idx, 1);
+            renderEditImgs(id);
+        }
+
+        // Input oculto para cambiar UNA imagen específica
+        let _cambiarImgTarget = null; // { id, idx }
+        const _cambiarInput = document.createElement('input');
+        _cambiarInput.type = 'file';
+        _cambiarInput.accept = 'image/*';
+        _cambiarInput.style.display = 'none';
+        document.body.appendChild(_cambiarInput);
+        _cambiarInput.addEventListener('change', async function() {
+            if (!this.files[0] || !_cambiarImgTarget) return;
+            const { id, idx } = _cambiarImgTarget;
+            _editImgs[id][idx] = await resizeImageFile(this.files[0]);
+            renderEditImgs(id);
+            _cambiarImgTarget = null;
+            this.value = '';
+        });
+
+        function cambiarEditImg(id, idx) {
+            _cambiarImgTarget = { id, idx };
+            _cambiarInput.click();
+        }
+
+        // Input oculto para AÑADIR imágenes nuevas al editar
+        let _addImgTarget = null;
+        const _addImgInput = document.createElement('input');
+        _addImgInput.type = 'file';
+        _addImgInput.accept = 'image/*';
+        _addImgInput.multiple = true;
+        _addImgInput.style.display = 'none';
+        document.body.appendChild(_addImgInput);
+        _addImgInput.addEventListener('change', async function() {
+            if (!this.files.length || !_addImgTarget) return;
+            const id = _addImgTarget;
+            const nuevas = await Promise.all(Array.from(this.files).map(file => resizeImageFile(file)));
+            _editImgs[id].push(...nuevas);
+            renderEditImgs(id);
+            this.value = '';
+        });
+
+        function agregarEditImgs(id) {
+            _addImgTarget = id;
+            _addImgInput.click();
+        }
+
+        function guardarEdicion(id) {
+            const nuevoTitulo = document.getElementById('edit-titulo-' + id).value.trim();
+            const nuevoCuerpo = document.getElementById('edit-cuerpo-' + id).value.trim();
+            let cartas = JSON.parse(localStorage.getItem('perg_cartas') || '[]');
+            const idx = cartas.findIndex(x => x.id === id);
+            if (idx === -1) return;
+            cartas[idx].titulo = nuevoTitulo;
+            cartas[idx].cuerpo = nuevoCuerpo;
+            // Guardar el arreglo de imágenes tal como quedó en el editor
+            cartas[idx].imgs = _editImgs[id] || [];
+
+            // Aviso visible dentro del propio formulario de edición si no cabe
+            const form = document.getElementById('edit-form-' + id);
+            const avisoId = 'edit-msg-' + id;
+            let aviso = document.getElementById(avisoId);
+            if (!aviso && form) {
+                aviso = document.createElement('span');
+                aviso.id = avisoId;
+                aviso.style.fontSize = '12px';
+                aviso.style.marginLeft = '6px';
+                form.querySelector('div[style*="display:flex"]').appendChild(aviso);
+            }
+
+            const ok = guardarEnLocalStorage(cartas, aviso);
+            if (!ok) return; // deja el formulario abierto para que puedas quitar alguna imagen y reintentar
+
+            delete _editImgs[id];
+            renderCartas();
+        }
+
+        // ── IMAGEN SEPARADORA ENTRE CARTAS ──
+        let _sepTargetId = null;
+
+        function abrirSepImg(cartaId) {
+            _sepTargetId = cartaId;
+            document.getElementById('sep-img-input').click();
+        }
+
+        function guardarImagenSeparador(input) {
+            if (!input.files[0] || _sepTargetId === null) return;
+            const reader = new FileReader();
+            reader.onload = e => {
+                let cartas = JSON.parse(localStorage.getItem('perg_cartas') || '[]');
+                const idx = cartas.findIndex(x => x.id === _sepTargetId);
+                if (idx !== -1) {
+                    cartas[idx].sepImg = e.target.result;
+                    localStorage.setItem('perg_cartas', JSON.stringify(cartas));
+                    renderCartas();
+                }
+                _sepTargetId = null;
+                input.value = '';
+            };
+            reader.readAsDataURL(input.files[0]);
+        }
+
+        function eliminarSepImg(cartaId) {
+            let cartas = JSON.parse(localStorage.getItem('perg_cartas') || '[]');
+            const idx = cartas.findIndex(x => x.id === cartaId);
+            if (idx !== -1) {
+                cartas[idx].sepImg = null;
+                localStorage.setItem('perg_cartas', JSON.stringify(cartas));
+                renderCartas();
+            }
+        }
+
+        function eliminarCarta(id) {
+            let cartas = JSON.parse(localStorage.getItem('perg_cartas') || '[]');
+            cartas = cartas.filter(c => c.id !== id);
+            localStorage.setItem('perg_cartas', JSON.stringify(cartas));
+            renderCartas();
+        }
+
+        // Redimensiona/comprime una imagen antes de convertirla a base64,
+        // para no reventar el límite de almacenamiento del navegador
+        // (localStorage suele tener solo 5-10MB por sitio).
+        function resizeImageFile(file, maxDim = 1000, quality = 0.72) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = e => {
+                    const img = new Image();
+                    img.onload = () => {
+                        let { width, height } = img;
+                        if (width > maxDim || height > maxDim) {
+                            if (width > height) { height = Math.round(height * maxDim / width); width = maxDim; }
+                            else { width = Math.round(width * maxDim / height); height = maxDim; }
+                        }
+                        const canvas = document.createElement('canvas');
+                        canvas.width = width; canvas.height = height;
+                        canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+                        resolve(canvas.toDataURL('image/jpeg', quality));
+                    };
+                    img.onerror = reject;
+                    img.src = e.target.result;
+                };
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
+            });
+        }
+
+        // Intenta guardar en localStorage; si no cabe, avisa en vez de fallar en silencio
+        function guardarEnLocalStorage(cartas, msgEl) {
+            try {
+                localStorage.setItem('perg_cartas', JSON.stringify(cartas));
+                return true;
+            } catch (err) {
+                console.warn('localStorage lleno:', err);
+                if (msgEl) {
+                    msgEl.innerText = '⚠ No hay espacio suficiente. Elimina alguna imagen o carta e intenta de nuevo.';
+                    msgEl.style.color = '#c0392b';
+                }
+                return false;
+            }
+        }
+
+        function abrirLightbox(src) {
+            document.getElementById('lightbox-img').src = src;
+            document.getElementById('img-lightbox').classList.add('active');
+        }
+
+        function cerrarLightbox() {
+            document.getElementById('img-lightbox').classList.remove('active');
+        }
+
+        // ── RENDER CARTAS (zigzag: imagen cada 2 párrafos) ──
+        function buildZigzagContent(cuerpo, imgs) {
+            if (!imgs || imgs.length === 0) {
+                if (!cuerpo) return '';
+                return `<div class="carta-parrafo-texto">${cuerpo.replace(/\n/g,'<br>')}</div>`;
+            }
+
+            const parrafos = (cuerpo || '').split(/\n\n+/).filter(p => p.trim());
+
+            if (parrafos.length === 0) {
+                // Solo imágenes
+                return imgs.map((src, idx) => {
+                    const dir = idx % 2 === 0 ? 'img-derecha' : 'img-izquierda';
+                    return `<div class="carta-parrafo-wrap ${dir}">
+                        <img src="${src}" class="carta-img-thumb" onclick="abrirLightbox('${src.replace(/'/g,"\\'")}')">
+                    </div>`;
+                }).join('');
+            }
+
+            // Zigzag: imagen cada 2 párrafos (párrafos 1, 3, 5... = índices 0, 2, 4)
+            let html = '';
+            let imgIdx = 0;
+
+            for (let i = 0; i < parrafos.length; i++) {
+                // ¿Toca imagen en este párrafo? Solo en párrafos pares (0, 2, 4...)
+                const tocaImg = (i % 2 === 0) && imgIdx < imgs.length;
+
+                if (tocaImg) {
+                    const dir = imgIdx % 2 === 0 ? 'img-derecha' : 'img-izquierda';
+                    const src = imgs[imgIdx];
+                    html += `<div class="carta-parrafo-wrap ${dir}">
+                        <div class="carta-parrafo-texto">${parrafos[i].replace(/\n/g,'<br>')}</div>
+                        <img src="${src}" class="carta-img-thumb" onclick="abrirLightbox('${src.replace(/'/g,"\\'")}')">
+                    </div>`;
+                    imgIdx++;
+                } else {
+                    // Párrafo impar: solo texto
+                    html += `<div class="carta-parrafo-texto" style="margin-bottom:12px;">${parrafos[i].replace(/\n/g,'<br>')}</div>`;
+                }
+            }
+
+            // Imágenes sobrantes (si hay más imágenes que párrafos pares)
+            while (imgIdx < imgs.length) {
+                const src = imgs[imgIdx];
+                const dir = imgIdx % 2 === 0 ? 'img-derecha' : 'img-izquierda';
+                html += `<div class="carta-parrafo-wrap ${dir}">
+                    <img src="${src}" class="carta-img-thumb" onclick="abrirLightbox('${src.replace(/'/g,"\\'")}')">
+                </div>`;
+                imgIdx++;
+            }
+
+            return html;
+        }
+
+        function renderCartas() {
+            const lista = document.getElementById('lista-cartas');
+            const cartas = JSON.parse(localStorage.getItem('perg_cartas') || '[]');
+
+            if (cartas.length === 0) {
+                lista.innerHTML = '<p style="font-family:\'IM Fell English\',serif; color:rgba(212,160,80,0.35); font-style:italic; text-align:center; font-size:13px; margin-top:10px;">~ Aún no hay cartas selladas ~</p>';
+                return;
+            }
+
+            let html = '';
+
+            cartas.forEach((c, idx) => {
+                const contenidoHtml = buildZigzagContent(c.cuerpo, c.imgs || []);
+
+                // Carta
+                html += `
+                <div class="carta-item" id="carta-${c.id}">
+                    <div class="carta-actions">
+                        <button class="carta-edit-btn" onclick="toggleEditCarta(${c.id})">✏ editar</button>
+                        <button class="carta-delete" onclick="eliminarCarta(${c.id})">✕</button>
+                    </div>
+                    <div class="carta-item-title">${c.titulo || '~ sin título ~'}</div>
+                    <div style="font-size:10px; color:rgba(120,60,20,0.5); letter-spacing:1px; margin-bottom:10px; font-family:'IM Fell English',serif; font-style:italic;">${c.fecha}</div>
+                    <div>${contenidoHtml}</div>
+
+                    <!-- Formulario de edición inline -->
+                    <div class="carta-edit-form" id="edit-form-${c.id}">
+                        <label>Título</label>
+                        <input type="text" id="edit-titulo-${c.id}" placeholder="Título de la carta...">
+                        <label>Mensaje</label>
+                        <textarea id="edit-cuerpo-${c.id}" placeholder="Escribe el nuevo contenido..."></textarea>
+                        <label style="margin-bottom:6px;">Imágenes — cambia, elimina o reordena una por una</label>
+                        <div id="edit-imgs-grid-${c.id}" style="display:flex; flex-wrap:wrap; gap:4px; margin-bottom:8px; min-height:24px;"></div>
+                        <button onclick="agregarEditImgs(${c.id})" style="font-family:'IM Fell English',serif; font-size:11px; background:none; border:1px dashed rgba(160,80,20,0.3); color:rgba(100,50,10,0.55); border-radius:3px; padding:4px 12px; cursor:pointer; margin-bottom:12px; letter-spacing:1px;">+ añadir imagen</button>
+                        <div style="display:flex; gap:10px; align-items:center;">
+                            <button class="btn-perg" onclick="guardarEdicion(${c.id})">Guardar cambios ✓</button>
+                            <button onclick="toggleEditCarta(${c.id})" style="font-family:'IM Fell English',serif; font-size:12px; background:none; border:none; color:rgba(120,60,20,0.5); cursor:pointer;">cancelar</button>
+                        </div>
+                    </div>
+                </div>`;
+
+                // Separador entre cartas (no después de la última)
+                if (idx < cartas.length - 1) {
+                    html += `<div class="carta-separador" id="sep-${c.id}">`;
+
+                    if (c.sepImg) {
+                        html += `<img src="${c.sepImg}" class="carta-separador-img" onclick="abrirLightbox('${c.sepImg.replace(/'/g,"\\'")}')">
+                        <div style="display:flex; gap:8px; align-items:center; margin-top:4px;">
+                            <button class="sep-add-img-btn" onclick="abrirSepImg(${c.id})">✎ cambiar imagen</button>
+                            <button class="sep-add-img-btn" onclick="eliminarSepImg(${c.id})" style="border-color:rgba(160,40,20,0.2); color:rgba(140,40,20,0.35);">✕ quitar</button>
+                        </div>`;
+                    } else {
+                        html += `<div class="carta-separador-line">
+                            <hr><span>✦</span><hr>
+                        </div>
+                        <button class="sep-add-img-btn" onclick="abrirSepImg(${c.id})">+ añadir imagen separadora</button>`;
+                    }
+
+                    html += `</div>`;
+                }
+            });
+
+            lista.innerHTML = html;
+        }
+
+        function initPergParticles() {
+            const pc = document.getElementById('perg-canvas');
+            const pctx = pc.getContext('2d');
+            pc.width = window.innerWidth; pc.height = window.innerHeight;
+            const motes = Array.from({length: 60}, () => ({
+                x: Math.random() * pc.width, y: Math.random() * pc.height,
+                r: 0.5 + Math.random() * 1.5,
+                vy: -(0.2 + Math.random() * 0.5), vx: (Math.random() - 0.5) * 0.3,
+                alpha: 0.2 + Math.random() * 0.5, hue: 35 + Math.random() * 20,
+            }));
+            function loopPerg() {
+                pctx.clearRect(0, 0, pc.width, pc.height);
+                for (const m of motes) {
+                    m.x += m.vx; m.y += m.vy;
+                    if (m.y < 0) { m.y = pc.height; m.x = Math.random() * pc.width; }
+                    pctx.beginPath(); pctx.arc(m.x, m.y, m.r, 0, Math.PI*2);
+                    pctx.fillStyle = `hsla(${m.hue}, 80%, 70%, ${m.alpha})`; pctx.fill();
+                }
+                requestAnimationFrame(loopPerg);
+            }
+            loopPerg();
+        }
+
+        // ══════════════════════════════════════════════════════════
+    // ── PARCHE v2 (corregido): aumenta el almacenamiento ──
+    // localStorage solo permite 5-10MB en total, por eso ya no dejaba subir
+    // más imágenes. Este parche redirige SOLO la clave 'perg_cartas' a
+    // IndexedDB (cientos de MB disponibles).
+    //
+    // SEGURIDAD: antes de mover nada, guarda una copia de tus cartas
+    // actuales en una clave nueva de localStorage (perg_cartas_backup_*)
+    // que NUNCA se borra ni se toca. Así, pase lo que pase, tienes un
+    // respaldo intacto.
+    // ══════════════════════════════════════════════════════════
+    (function() {
+        // Capturamos las funciones ORIGINALES de localStorage ANTES de
+        // tocar nada. Este era el bug de la versión anterior: se leían
+        // usando la versión ya interceptada, que devolvía vacío.
+        const originalGetItem = Storage.prototype.getItem;
+        const originalSetItem = Storage.prototype.setItem;
+
+        // ── Respaldo de seguridad (no se borra jamás automáticamente) ──
+        try {
+            const currentValue = originalGetItem.call(window.localStorage, 'perg_cartas');
+            if (currentValue) {
+                const backupKey = 'perg_cartas_backup_v2';
+                const alreadyBackedUp = originalGetItem.call(window.localStorage, backupKey);
+                if (!alreadyBackedUp) {
+                    originalSetItem.call(window.localStorage, backupKey, currentValue);
+                    console.log('[Refugio] Respaldo de seguridad creado en localStorage:', backupKey);
+                }
+            }
+        } catch (e) {
+            console.warn('[Refugio] No se pudo crear respaldo:', e);
+        }
+
+        const DB_NAME = 'refugio_cartas_db';
+        let dbPromise = null;
+        function openDB() {
+            if (dbPromise) return dbPromise;
+            dbPromise = new Promise((resolve, reject) => {
+                const req = indexedDB.open(DB_NAME, 1);
+                req.onupgradeneeded = () => req.result.createObjectStore('kv');
+                req.onsuccess = () => resolve(req.result);
+                req.onerror = () => reject(req.error);
+            });
+            return dbPromise;
+        }
+        async function idbGet(key) {
+            const db = await openDB();
+            return new Promise((resolve, reject) => {
+                const tx = db.transaction('kv', 'readonly');
+                const r = tx.objectStore('kv').get(key);
+                r.onsuccess = () => resolve(r.result);
+                r.onerror = () => reject(r.error);
+            });
+        }
+        async function idbSet(key, value) {
+            const db = await openDB();
+            return new Promise((resolve, reject) => {
+                const tx = db.transaction('kv', 'readwrite');
+                tx.objectStore('kv').put(value, key);
+                tx.oncomplete = () => resolve(true);
+                tx.onerror = () => reject(tx.error);
+            });
+        }
+
+        let cache = null;
+        let ready = false;
+        const pending = [];
+
+        // Instalamos el interceptor AHORA, pero usando 'cache' (que empieza
+        // en null y se llena en cuanto termine la migración de abajo).
+        Storage.prototype.getItem = function(key) {
+            if (key === 'perg_cartas') return cache;
+            return originalGetItem.call(this, key);
+        };
+        Storage.prototype.setItem = function(key, value) {
+            if (key === 'perg_cartas') {
+                cache = value;
+                idbSet('perg_cartas', value).catch(e => console.warn('[Refugio] Error guardando en IndexedDB:', e));
+                return;
+            }
+            return originalSetItem.call(this, key, value);
+        };
+
+        // Migración: usa SIEMPRE las funciones originales capturadas arriba,
+        // nunca Storage.prototype.getItem (que ya está interceptado).
+        idbGet('perg_cartas').then(val => {
+            if (val === undefined || val === null) {
+                const old = originalGetItem.call(window.localStorage, 'perg_cartas');
+                cache = old || '[]';
+                if (old) {
+                    idbSet('perg_cartas', old).then(() => {
+                        console.log('[Refugio] Cartas migradas correctamente a IndexedDB.');
+                    });
+                }
+            } else {
+                cache = val;
+            }
+            ready = true;
+            pending.forEach(fn => fn());
+            pending.length = 0;
+        }).catch(e => {
+            console.warn('[Refugio] IndexedDB no disponible, usando localStorage normal:', e);
+            cache = originalGetItem.call(window.localStorage, 'perg_cartas') || '[]';
+            ready = true;
+            pending.forEach(fn => fn());
+            pending.length = 0;
+        });
+
+        window._pergStorageReady = new Promise(resolve => {
+            if (ready) resolve();
+            else pending.push(resolve);
+        });
+
+        // Espera a que la migración termine antes de mostrar el baúl la primera vez
+        if (typeof irACartas === 'function') {
+            const _origIrACartas = irACartas;
+            irACartas = async function() {
+                await window._pergStorageReady;
+                return _origIrACartas.apply(this, arguments);
+            };
+        }
+    })();
+    </script>
+</body>
+</html>
